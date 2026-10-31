@@ -13,13 +13,14 @@ from pathlib import Path
 from typing import Any
 
 from core.log import configure_logging
+from core.warehouse import REPO_ROOT
 from ingestion.manifest import load_manifest, sha256_file
 from ingestion.raw_csv import BULK_COLUMNS, csv_to_parquet, extract_single_member
 
 logger = logging.getLogger(__name__)
 
-RAW_MANIFEST = Path("data/raw/MANIFEST.json")
-DEFAULT_OUT = Path("data/warehouse/raw/complaints.parquet")
+RAW_MANIFEST = REPO_ROOT / "data" / "raw" / "MANIFEST.json"
+DEFAULT_OUT = REPO_ROOT / "data" / "warehouse" / "raw" / "complaints.parquet"
 
 
 def _manifest_date(source: Path, manifest_path: Path) -> str | None:
@@ -53,8 +54,6 @@ def ingest(
             work_dir.rmdir()
     else:
         rows = csv_to_parquet(source, BULK_COLUMNS, tmp, source.name)
-    os.replace(tmp, out)
-
     info = {
         "source_path": str(source),
         "source_sha256": sha256_file(source),
@@ -62,7 +61,12 @@ def ingest(
         "rows": rows,
         "built_at": datetime.now(UTC).isoformat(timespec="seconds"),
     }
-    (out.parent / "snapshot.json").write_text(json.dumps(info, indent=2) + "\n")
+    # Both files are complete before either is replaced; dbt's
+    # assert_staging_rows_match_snapshot test catches any remaining mismatch.
+    snap_tmp = out.parent / "snapshot.json.tmp"
+    snap_tmp.write_text(json.dumps(info, indent=2) + "\n")
+    os.replace(tmp, out)
+    os.replace(snap_tmp, out.parent / "snapshot.json")
     logger.info("ingested %s: %d rows, snapshot %s", source, rows, snapshot_date)
     return info
 

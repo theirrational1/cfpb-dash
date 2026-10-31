@@ -6,10 +6,12 @@ from pathlib import Path
 
 import duckdb
 
+from core.warehouse import REPO_ROOT
+
 logger = logging.getLogger(__name__)
 
-INTERIM_DIR = Path("data/interim")
-REPORT_DIR = Path("docs/profiling")
+INTERIM_DIR = REPO_ROOT / "data" / "interim"
+REPORT_DIR = REPO_ROOT / "docs" / "profiling"
 
 Sections = list[tuple[str, str]]
 

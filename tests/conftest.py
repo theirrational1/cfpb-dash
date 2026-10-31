@@ -84,13 +84,32 @@ def fixture_csv() -> Path:
     return FIXTURE_CSV
 
 
-@pytest.fixture(scope="session")
-def warehouse(tmp_path_factory, fixture_csv):
-    """Fixture CSV -> raw Parquet -> `dbt build`, once per test session."""
+def build_warehouse(root: Path, csv_path: Path, snapshot_date: str, project_dir: Path):
+    """Ingest `csv_path` and `dbt build` into a warehouse at `root` (shared test helper)."""
     from core.warehouse import Warehouse, run_cli
     from ingestion.bulk import ingest
 
-    wh = Warehouse(tmp_path_factory.mktemp("warehouse"))
-    ingest(fixture_csv, wh.raw_parquet, snapshot_date="2026-10-31", work_dir=wh.root / "work")
+    wh = Warehouse(root, project_dir=project_dir)
+    ingest(csv_path, wh.raw_parquet, snapshot_date=snapshot_date, work_dir=root / "work")
     run_cli("dbt", ["build"], wh)
     return wh
+
+
+@pytest.fixture(scope="session")
+def dbt_project(tmp_path_factory) -> Path:
+    """A private copy of dbt/ so test builds never touch the real dbt/target."""
+    import shutil
+
+    from core.warehouse import DBT_DIR
+
+    dest = tmp_path_factory.mktemp("dbt_project") / "dbt"
+    shutil.copytree(DBT_DIR, dest, ignore=shutil.ignore_patterns("target", "logs", ".user.yml"))
+    return dest
+
+
+@pytest.fixture(scope="session")
+def warehouse(tmp_path_factory, fixture_csv, dbt_project):
+    """Fixture CSV -> raw Parquet -> `dbt build`, once per test session."""
+    return build_warehouse(
+        tmp_path_factory.mktemp("warehouse"), fixture_csv, "2026-10-31", dbt_project
+    )

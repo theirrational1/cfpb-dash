@@ -1,9 +1,21 @@
 # Paths come from the environment so dbt, MetricFlow and Python agree on one warehouse.
 # CLI: uv run --env-file dbt.env dbt build   (from the repo root)
+# MetricFlow runs with CFPB_DBT_TARGET=readonly so readers never lock each other out.
 cfpb:
-  target: dev
+  target: "{{ env_var('CFPB_DBT_TARGET', 'dev') }}"
   outputs:
     dev:
       type: duckdb
       path: "{{ env_var('CFPB_DUCKDB_PATH') }}"
+      threads: 4
+    # dbt-duckdb always opens `path` read-write; only attachments can be read-only. So the
+    # readonly target is an in-memory DB that attaches the warehouse under its built name.
+    readonly:
+      type: duckdb
+      path: ":memory:"
+      database: cfpb
+      attach:
+        - path: "{{ env_var('CFPB_DUCKDB_PATH') }}"
+          alias: cfpb
+          read_only: true
       threads: 4

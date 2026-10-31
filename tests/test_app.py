@@ -5,6 +5,7 @@ from core.warehouse import REPO_ROOT
 
 def test_app_renders_chart_for_selected_company(warehouse, monkeypatch):
     monkeypatch.setenv("CFPB_WAREHOUSE_ROOT", str(warehouse.root))
+    monkeypatch.setenv("CFPB_DBT_PROJECT_DIR", str(warehouse.project_dir))
     at = AppTest.from_file(str(REPO_ROOT / "app" / "main.py"), default_timeout=120)
     at.run()
     assert not at.exception

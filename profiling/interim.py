@@ -13,6 +13,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from core.log import configure_logging
+from core.warehouse import REPO_ROOT
 from ingestion.manifest import load_manifest
 from ingestion.raw_csv import (
     BULK_COLUMNS,
@@ -23,8 +24,8 @@ from ingestion.raw_csv import (
 
 logger = logging.getLogger(__name__)
 
-RAW_DIR = Path("data/raw")
-INTERIM_DIR = Path("data/interim")
+RAW_DIR = REPO_ROOT / "data" / "raw"
+INTERIM_DIR = REPO_ROOT / "data" / "interim"
 
 
 def build_parquet(

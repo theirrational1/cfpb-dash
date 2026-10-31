@@ -6,7 +6,8 @@ model-paths: ["models", "semantic_models"]
 models:
   cfpb:
     staging:
-      +materialized: view
+      # tables, not views: a copied (frozen) warehouse must not read the original raw parquet
+      +materialized: table
     marts:
       +materialized: table
 

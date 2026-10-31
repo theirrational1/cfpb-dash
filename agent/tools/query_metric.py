@@ -7,13 +7,14 @@ grain (MetricFlow widens them to the grain), and bare `metric_time`.
 """
 
 import csv
-import json
 import logging
 import re
 import tempfile
 from dataclasses import dataclass
 from datetime import date, timedelta
 from pathlib import Path
+
+import duckdb
 
 from agent.tools.catalog import Catalog, load_catalog
 from core.warehouse import Warehouse, run_cli
@@ -132,6 +133,16 @@ def _where(dimension: str, value: str) -> str:
     return f"{{{{ Dimension('{dimension}') }}}} = '{quoted}'"
 
 
+def read_snapshot_stamp(warehouse: Warehouse) -> dict[str, str]:
+    """The snapshot the warehouse was BUILT from (dbt model warehouse_snapshot), not the raw
+    snapshot.json, which can be newer than the last build."""
+    with duckdb.connect(str(warehouse.duckdb_path), read_only=True) as con:
+        rows = con.execute("SELECT snapshot_date, source_sha256 FROM warehouse_snapshot").fetchall()
+    if len(rows) != 1:
+        raise RuntimeError(f"{warehouse.duckdb_path}: warehouse_snapshot has {len(rows)} rows")
+    return {"snapshot_date": rows[0][0], "source_sha256": rows[0][1]}
+
+
 def _number(value: str) -> int | float | None:
     if value == "":
         return None
@@ -177,7 +188,7 @@ def query_metric(
     rows: list[dict[str, str | int | float | None]] = [
         {k: _number(v) if k in metrics else v for k, v in r.items()} for r in raw
     ]
-    snapshot = json.loads(warehouse.snapshot_json.read_text())
+    snapshot = read_snapshot_stamp(warehouse)
     provenance = Provenance(
         metrics=list(metrics),
         group_by=group_by,

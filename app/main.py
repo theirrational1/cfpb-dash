@@ -1,10 +1,9 @@
 """Walking-skeleton dashboard: pick a company, see complaint_count by month.
 
 Every number comes from query_metric (governed MetricFlow metrics); the app does no math.
-Run: uv run streamlit run app/main.py   (CFPB_WAREHOUSE_ROOT overrides data/warehouse)
+Run: uv run streamlit run app/main.py   (CFPB_WAREHOUSE_ROOT / CFPB_DBT_PROJECT_DIR override)
 """
 
-import os
 import sys
 from pathlib import Path
 
@@ -19,36 +18,31 @@ from core.warehouse import Warehouse  # noqa: E402
 METRIC = "complaint_count"
 
 
-def warehouse() -> Warehouse:
-    root = os.environ.get("CFPB_WAREHOUSE_ROOT")
-    return Warehouse(Path(root)) if root else Warehouse()
-
-
 @st.cache_data(show_spinner=False)
-def companies(root: str) -> list[str]:
-    result = query_metric(
-        [METRIC], group_by=["complaint__company"], warehouse=Warehouse(Path(root))
-    )
+def companies(root: str, project: str) -> list[str]:
+    wh = Warehouse(Path(root), Path(project))
+    result = query_metric([METRIC], group_by=["complaint__company"], warehouse=wh)
     ranked = sorted(result.rows, key=lambda r: r[METRIC] or 0, reverse=True)
     return [str(r["complaint__company"]) for r in ranked]
 
 
 @st.cache_data(show_spinner=False)
-def monthly(root: str, company: str) -> MetricResult:
+def monthly(root: str, project: str, company: str) -> MetricResult:
     return query_metric(
         [METRIC],
         group_by=["metric_time__month"],
         filters={"complaint__company": company},
-        warehouse=Warehouse(Path(root)),
+        warehouse=Warehouse(Path(root), Path(project)),
     )
 
 
 def main() -> None:
     st.set_page_config(page_title="CFPB Complaint Intelligence", layout="wide")
     st.title("CFPB Complaint Intelligence")
-    root = str(warehouse().root)
-    company = st.selectbox("Company", companies(root))
-    result = monthly(root, company)
+    wh = Warehouse.from_env()
+    root, project = str(wh.root), str(wh.project_dir)
+    company = st.selectbox("Company", companies(root, project))
+    result = monthly(root, project, company)
     st.subheader(f"Complaints per month: {company}")
     st.line_chart(result.rows, x="metric_time__month", y=METRIC)
     p = result.provenance

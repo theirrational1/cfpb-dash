@@ -5,6 +5,7 @@ and DuckDB all point at the same files. CLI users get the same defaults from dbt
 """
 
 import logging
+import os
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -47,7 +48,15 @@ class Warehouse:
             "DBT_LOG_PATH": str(self.root / "dbt_logs"),
             "CFPB_DUCKDB_PATH": str(self.duckdb_path),
             "CFPB_RAW_PARQUET": str(self.raw_parquet),
+            "CFPB_SNAPSHOT_JSON": str(self.snapshot_json),
         }
+
+    @classmethod
+    def from_env(cls) -> "Warehouse":
+        """CFPB_WAREHOUSE_ROOT / CFPB_DBT_PROJECT_DIR override the defaults (app, CLIs)."""
+        root = os.environ.get("CFPB_WAREHOUSE_ROOT")
+        project = os.environ.get("CFPB_DBT_PROJECT_DIR")
+        return cls(Path(root) if root else DEFAULT_ROOT, Path(project) if project else DBT_DIR)
 
 
 def run_cli(tool: str, args: list[str], warehouse: Warehouse) -> str:
@@ -56,6 +65,8 @@ def run_cli(tool: str, args: list[str], warehouse: Warehouse) -> str:
         raise ValueError(f"unknown tool {tool!r}")
     exe = Path(sys.executable).parent / tool
     env = {"PATH": str(exe.parent), "HOME": str(Path.home()), **warehouse.env()}
+    if tool == "mf":
+        env["CFPB_DBT_TARGET"] = "readonly"
     logger.info("running %s %s (warehouse %s)", tool, " ".join(args), warehouse.root)
     proc = subprocess.run([str(exe), *args], env=env, cwd=REPO_ROOT, capture_output=True, text=True)
     if proc.returncode != 0:
