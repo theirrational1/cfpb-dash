@@ -8,7 +8,8 @@ from agent.adapters.cache import JsonCache
 from agent.adapters.fake import FakeAdapter
 from agent.adapters.gateway import Gateway
 from agent.adapters.usage import UsageLog
-from agent.loop import NoGovernedNumbersError, parse_final, run
+from agent.errors import FinalAnswerError, StepLimitError, ToolArgumentError
+from agent.loop import NoGovernedNumbersError, parse_final, run, untraced_numbers
 
 COMPANY = "CITIBANK, N.A."
 ARGS = {
@@ -75,11 +76,71 @@ def test_answer_without_tool_call_is_rejected(warehouse, tmp_path):
 
 def test_step_limit(warehouse, tmp_path):
     _, gw = _gateway(tmp_path, [_tool_call()] * 3)
-    with pytest.raises(RuntimeError, match="step limit"):
+    with pytest.raises(StepLimitError, match="step limit"):
         run("loop forever", gw, warehouse, max_steps=3)
 
 
 def test_parse_final_accepts_fenced_json_and_rejects_prose():
     assert parse_final('```json\n{"answer": "x", "value": 3}\n```') == ("x", 3)
-    with pytest.raises(json.JSONDecodeError):
+    with pytest.raises(FinalAnswerError):
         parse_final("There were 3 complaints.")
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        '{"answer": "x", "value": "1002"}',  # string, not a number
+        '{"answer": "x", "value": true}',  # bool is not a number
+        '{"answer": "x"}',  # missing value
+        '["not", "an", "object"]',
+    ],
+)
+def test_parse_final_rejects_non_numeric_values(text):
+    with pytest.raises(FinalAnswerError):
+        parse_final(text)
+
+
+def _answer(tmp_path, warehouse, final: str):
+    _, gw = _gateway(tmp_path, [_tool_call(), _final(final)])
+    return run("How many complaints did Citibank receive in March 2026?", gw, warehouse)
+
+
+def test_null_value_is_not_traced(warehouse, tmp_path):
+    """Review #8: value null used to count as traced."""
+    a = _answer(tmp_path, warehouse, '{"answer": "Citi got 999 complaints.", "value": null}')
+    assert a.value_traced is False
+    assert a.untraced_numbers == [999.0]
+
+
+def test_numbers_in_answer_text_must_trace(warehouse, tmp_path):
+    n = _march_count(warehouse)
+    ok = _answer(
+        tmp_path / "a",
+        warehouse,
+        json.dumps({"answer": f"In March 2026 {COMPANY} received {n:,} complaints.", "value": n}),
+    )
+    assert ok.value_traced and ok.untraced_numbers == []  # 2026 is in the question
+    bad = _answer(
+        tmp_path / "b",
+        warehouse,
+        json.dumps({"answer": f"{n} complaints, up 12% on February.", "value": n}),
+    )
+    assert bad.value_traced and bad.untraced_numbers == [12.0]
+
+
+def test_untraced_numbers_helper():
+    assert untraced_numbers("1,234 and 5.5% and -3", allowed={1234.0}) == [5.5, -3.0]
+
+
+def test_bad_tool_arguments_are_typed_model_errors(warehouse, tmp_path):
+    bad_calls = [
+        ToolCall("c", "query_metric", "{not json"),
+        ToolCall.of("c", "query_metric", {**ARGS, "time_range": ["2026-03-01"]}),  # review #6
+        ToolCall.of("c", "query_metric", {**ARGS, "sql": "select 1"}),
+        ToolCall.of("c", "run_sql", {"q": "select 1"}),
+    ]
+    for call in bad_calls:
+        result = ChatResult(content=None, tool_calls=[call], usage=Usage(1, 1), model="fake")
+        _, gw = _gateway(tmp_path / call.arguments_json[:5].replace("/", "_"), [result])
+        with pytest.raises(ToolArgumentError):
+            run("q", gw, warehouse)

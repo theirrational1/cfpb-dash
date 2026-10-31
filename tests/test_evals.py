@@ -130,3 +130,80 @@ def test_committed_dev_datasets_load_and_ground_truth_runs(warehouse):
     for path in files:
         for case in load_cases(path):
             assert isinstance(ground_truth(case, warehouse), int | float)
+
+
+def _answer_from_tool(messages):
+    """Final answer that reports exactly what query_metric returned (no ground-truth peeking)."""
+    tool = json.loads(messages[-1]["content"])
+    n = tool["rows"][0]["complaint_count"]
+    return ChatResult(
+        json.dumps({"answer": f"{n} complaints.", "value": n}), [], Usage(1, 1), "fake"
+    )
+
+
+def test_committed_e1_case_passes_end_to_end_with_governed_answer(warehouse, tmp_path):
+    """Review #9: the locked e1-001 must run through run_suite, not only parse."""
+    from core.warehouse import REPO_ROOT
+
+    cases = load_cases(REPO_ROOT / "evals" / "datasets" / "dev" / "e1.toml")
+    e1_001 = [c for c in cases if c.id == "e1-001"]
+    fake = FakeAdapter([_call(), _answer_from_tool])
+    summary = run_suite(
+        e1_001,
+        fake,
+        warehouse,
+        suite="e1",
+        split="dev",
+        results_dir=tmp_path / "results",
+        ops_dir=tmp_path / "ops",
+        budget_usd=1.0,
+        use_cache=False,
+    )
+    [case] = summary["cases"]
+    assert case["status"] == "pass", case
+    assert case["value_traced"] is True and case["untraced_numbers"] == []
+    assert summary["cache_hits"] == 0
+
+
+def test_untraced_text_number_fails_the_case(warehouse, cases_file, tmp_path):
+    def lying(messages):
+        n = json.loads(messages[-1]["content"])["rows"][0]["complaint_count"]
+        text = json.dumps({"answer": f"{n} complaints, double last year's 999.", "value": n})
+        return ChatResult(text, [], Usage(1, 1), "fake")
+
+    case = load_cases(cases_file)[:1]
+    summary = run_suite(
+        case,
+        FakeAdapter([_call(), lying]),
+        warehouse,
+        suite="e1",
+        split="dev",
+        results_dir=tmp_path / "r",
+        ops_dir=tmp_path / "o",
+        budget_usd=1.0,
+    )
+    [r] = summary["cases"]
+    assert r["status"] == "fail" and r["reason"] == "untraced_numbers"
+    assert r["untraced_numbers"] == [999.0]
+
+
+def test_infrastructure_failure_is_not_scored_as_a_model_error(
+    warehouse, cases_file, tmp_path, monkeypatch
+):
+    """Review #6: a broken warehouse / mf failure must stop the run, not become an `error` case."""
+
+    def broken(*args, **kwargs):
+        raise RuntimeError("mf query failed: Could not set lock on file")
+
+    monkeypatch.setattr("agent.tools.query_metric.run_cli", broken)
+    with pytest.raises(RuntimeError, match="lock"):
+        run_suite(
+            load_cases(cases_file)[:1],
+            FakeAdapter([_call()]),
+            warehouse,
+            suite="e1",
+            split="dev",
+            results_dir=tmp_path / "r",
+            ops_dir=tmp_path / "o",
+            budget_usd=1.0,
+        )

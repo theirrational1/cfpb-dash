@@ -24,6 +24,9 @@ def main() -> None:
     parser.add_argument("--model", required=True, choices=sorted(MODELS))
     parser.add_argument("--budget-usd", type=float, default=1.0)
     parser.add_argument("--warehouse", type=Path, help="snapshot warehouse root")
+    parser.add_argument(
+        "--no-cache", action="store_true", help="always call the model (scored runs)"
+    )
     args = parser.parse_args()
 
     summary = run_suite(
@@ -35,11 +38,13 @@ def main() -> None:
         results_dir=REPO_ROOT / "evals" / "results",
         ops_dir=REPO_ROOT / "data" / "ops",
         budget_usd=args.budget_usd,
+        use_cache=not args.no_cache,
     )
     print(
         f"{summary['suite']}/{summary['split']} model={summary['model']} "
         f"prompt={summary['prompt_version']} snapshot={summary['snapshot_date']}: "
-        f"{summary['passed']}/{summary['n']} passed, cost ${summary['cost_usd']:.4f}"
+        f"{summary['passed']}/{summary['n']} passed, cost ${summary['cost_usd']:.4f}, "
+        f"cache hits {summary['cache_hits']}"
     )
 
 

@@ -16,16 +16,13 @@ from pathlib import Path
 
 import duckdb
 
+from agent.errors import ToolArgumentError
 from agent.tools.catalog import Catalog, load_catalog
 from core.warehouse import Warehouse, run_cli
 
 logger = logging.getLogger(__name__)
 
 ISO_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
-
-
-class ToolArgumentError(ValueError):
-    """The caller (usually the model) asked for something the governed layer can't answer as-is."""
 
 
 @dataclass(frozen=True)
