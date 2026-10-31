@@ -1,7 +1,7 @@
 name: cfpb
 version: "0.1.0"
 profile: cfpb
-model-paths: ["models"]
+model-paths: ["models", "semantic_models"]
 
 models:
   cfpb:

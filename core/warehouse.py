@@ -34,10 +34,11 @@ class Warehouse:
         return self.raw_parquet.parent / "snapshot.json"
 
     def env(self) -> dict[str, str]:
+        # No DBT_TARGET_PATH: `mf` always reads dbt/target/semantic_manifest.json. Target holds
+        # project artifacts (same for every warehouse), so sharing it is safe.
         return {
             "DBT_PROJECT_DIR": str(DBT_DIR),
             "DBT_PROFILES_DIR": str(DBT_DIR),
-            "DBT_TARGET_PATH": str(self.root / "dbt_target"),
             "DBT_LOG_PATH": str(self.root / "dbt_logs"),
             "CFPB_DUCKDB_PATH": str(self.duckdb_path),
             "CFPB_RAW_PARQUET": str(self.raw_parquet),

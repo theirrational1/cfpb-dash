@@ -1,0 +1,33 @@
+# Governed metrics: defined here only (AGENTS.md). Definitions follow PRD §7.
+semantic_models:
+  - name: complaints
+    description: One row per complaint (fct_complaints).
+    model: ref('fct_complaints')
+    defaults:
+      agg_time_dimension: date_received
+    entities:
+      - name: complaint
+        type: primary
+        expr: complaint_id
+    dimensions:
+      - name: date_received
+        type: time
+        type_params:
+          time_granularity: day
+      - name: company
+        type: categorical
+      - name: product
+        type: categorical
+    measures:
+      - name: complaints
+        description: Count of complaints.
+        agg: count
+        expr: complaint_id
+
+metrics:
+  - name: complaint_count
+    label: Complaint count
+    description: Count of complaints (PRD §7). Counts are not rates; no size denominator.
+    type: simple
+    type_params:
+      measure: complaints
