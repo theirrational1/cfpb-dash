@@ -27,3 +27,9 @@ Hand-written observations from the generated reports in this folder. Snapshot: b
 - **`In progress` is 623K rows, almost all from 2026 (622,907).** Those complaints are open, so they must be excluded from the closed-complaint denominator. `Untimely response` (35.7K) is also not closed.
 - **Non-monetary relief jumps** from about 44K a year (2021) to 261K (2022) and then 2.2M (2025), driven by the credit bureaus. Peer comparisons must be within product.
 - **`Company public response` nulls are partly structural.** The field effectively starts in 2015, so 2011–2014 is 100% null. `Company chooses not to provide a public response` (2014–2016) was replaced by `Company has responded to the consumer and the CFPB and chooses not to provide a public response` (2016 onward), and the two should be mapped together.
+
+## M0-10 Labels over time ([03_labels.md](03_labels.md))
+
+- **Two product taxonomy revisions:** **April 2017** (e.g. `Credit card` → `Credit card or prepaid card`, `Bank account or service` → `Checking or savings account`) and **August 2023** (`Credit card or prepaid card` → `Credit card` again, `Credit reporting, credit repair services, …` → `Credit reporting or other personal consumer reports`, the payday-loan label renamed again). The credit card switch-back happened between 2023-08-17 and 2023-08-25.
+- 21 product labels map to roughly 11 current products. Sub-products and issues churn even more: 296 product×sub-product/issue rows are retired and 196 introduced. The M2-06 mapping seed must cover both 2017 and 2023.
+- `Virtual currency` (18 rows) and `Other financial service` (1,056) are tiny retired products.

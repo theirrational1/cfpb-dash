@@ -61,3 +61,31 @@ def test_company_response_pivot(make_interim):
     ]
     assert "| Closed with explanation | 2 | 0 |" in table
     assert "| In progress | 0 | 1 |" in table
+
+
+def test_label_lifespan_flags(make_interim):
+    from profiling import labels
+
+    rows = [
+        _bulk("1", "2020-01-01", product="Old product"),
+        _bulk("2", "2020-01-01", product="Both"),
+        _bulk("3", "2025-01-01", product="Both"),
+        _bulk("4", "2025-01-01", product="New product"),
+    ]
+    con = connect(make_interim(rows, []))
+    table = dict(labels.sections(con))["Products"]
+    assert "| Old product | 2020 | 2020 | 1 | retired |" in table
+    assert "| Both | 2020 | 2025 | 2 | whole span |" in table
+    assert "| New product | 2025 | 2025 | 1 | introduced |" in table
+
+
+def _narr(cid: str, received: str, txt: str | None, company: str = "Acme", **kw):
+    return {
+        "Complaint ID": cid,
+        "Date received": received,
+        "Date sent to company": received,
+        "Product": "Credit card",
+        "Company": company,
+        "Consumer complaint narrative": txt,
+        **kw,
+    }
