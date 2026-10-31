@@ -7,6 +7,9 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DO_NOT_TRACK: "1"
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v7
@@ -14,5 +17,8 @@ jobs:
       - run: uv run ruff check .
       - run: uv run ruff format --check .
       - run: uv run ty check
-      # Tests marked `data` need local raw files and are deselected by default (pyproject addopts).
+      # Runs the walking skeleton on tests/fixtures (ingestion -> dbt build -> MetricFlow ->
+      # Streamlit AppTest -> agent loop + eval harness with the scripted FakeAdapter).
+      # No Ollama, no paid model calls. Tests marked `data` need local raw files and are
+      # deselected by default (pyproject addopts).
       - run: uv run pytest
