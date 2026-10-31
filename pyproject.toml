@@ -3,7 +3,12 @@ name = "cfpb-dash"
 version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = [
+    "dbt-core>=1.12.6",
+    "dbt-duckdb>=1.11.1",
+    "dbt-metricflow[duckdb]>=0.15.0",
     "duckdb>=2.0.0",
+    "openai>=3.42.0",
+    "streamlit>=1.66.1",
 ]
 
 [dependency-groups]

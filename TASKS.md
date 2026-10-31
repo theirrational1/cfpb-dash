@@ -39,7 +39,7 @@ Small, specific tasks to implement `PRD.md`. TDD for every feature. One mileston
 
 **Done when:** one metric for one company flows end to end — ingestion → dbt → MetricFlow → Streamlit chart → one agent tool → one passing eval case — with tests at each step. Ugly is fine.
 
-- [ ] M1-01 Fixture dataset (~1K rows, one product) in `tests/fixtures/` + `conftest.py` fixture
+- [x] M1-01 Fixture dataset (~1K rows, one product) in `tests/fixtures/` + `conftest.py` fixture
 - [ ] M1-02 Minimal ingestion: fixture/bulk slice → raw parquet
 - [ ] M1-03 Minimal dbt: one staging model + one fact model + 2 tests
 - [ ] M1-04 One MetricFlow metric (`complaint_count` by month) + test vs hand-written SQL

@@ -73,3 +73,12 @@ def make_interim(tmp_path: Path):
         return root
 
     return build
+
+
+FIXTURE_CSV = Path(__file__).parent / "fixtures" / "complaints_sample.csv"
+
+
+@pytest.fixture(scope="session")
+def fixture_csv() -> Path:
+    """~1K real credit card complaints (3 issuers, 2025-01..2026-06), raw bulk header."""
+    return FIXTURE_CSV
