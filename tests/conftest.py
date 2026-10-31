@@ -40,7 +40,7 @@ def make_interim(tmp_path: Path):
     """
     import duckdb
 
-    from profiling.interim import BULK_COLUMNS, NARRATIVE_COLUMNS
+    from ingestion.raw_csv import BULK_COLUMNS, NARRATIVE_COLUMNS
 
     def build(bulk_rows: list[dict], narrative_rows: list[dict]) -> Path:
         root = tmp_path / "interim"

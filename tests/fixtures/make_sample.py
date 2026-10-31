@@ -12,7 +12,7 @@ from pathlib import Path
 import duckdb
 
 from core.log import configure_logging
-from profiling.interim import BULK_COLUMNS
+from ingestion.raw_csv import BULK_COLUMNS
 
 logger = logging.getLogger(__name__)
 

@@ -1,6 +1,6 @@
 import duckdb
 
-from profiling.interim import BULK_COLUMNS, count_csv_records
+from ingestion.raw_csv import BULK_COLUMNS, count_csv_records
 
 
 def test_fixture_has_raw_header_and_expected_shape(fixture_csv):

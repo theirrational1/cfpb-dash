@@ -6,7 +6,7 @@ Run: uv run python -m profiling.overview
 import duckdb
 
 from core.log import configure_logging
-from profiling.interim import BULK_COLUMNS
+from ingestion.raw_csv import BULK_COLUMNS
 from profiling.report import REPORT_DIR, Sections, connect, md_table, write_report
 
 

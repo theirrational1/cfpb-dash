@@ -4,7 +4,8 @@ from pathlib import Path
 import duckdb
 import pytest
 
-from profiling.interim import build_parquet, count_csv_records
+from ingestion.raw_csv import count_csv_records
+from profiling.interim import build_parquet
 
 COLUMNS = ["Date received", "Consumer complaint narrative", "Complaint ID"]
 CSV = (
