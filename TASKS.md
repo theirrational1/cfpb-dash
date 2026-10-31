@@ -26,7 +26,7 @@ Small, specific tasks to implement `PRD.md`. TDD for every feature. One mileston
 
 **Track C — profiling (after Track A), CLEANER Audit pass**
 - [x] M0-08 Row counts by year, product, company; null rates per field; types and cardinality
-- [ ] M0-09 Distinct `company_response` values over time
+- [x] M0-09 Distinct `company_response` values over time
 - [ ] M0-10 Product/issue label changes over time (input to mapping layer)
 - [ ] M0-11 Narrative counts by product and company; duplicate/template rate estimate
 - [ ] M0-12 Apply product rule (≥20K narratives, ≥15 companies above threshold, no issue >50%, bank-analyst relevant; default credit cards); record in PRD decision log

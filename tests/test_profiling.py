@@ -45,3 +45,19 @@ def test_overview_runs_and_counts(make_interim, tmp_path):
     out = tmp_path / "r.md"
     write_report(out, "T", "profiling.overview", list(secs.items()), root)
     assert out.read_text().startswith("# T\n\nSnapshot: `bulk/x.csv.zip`")
+
+
+def test_company_response_pivot(make_interim):
+    from profiling import company_response
+
+    rows = [
+        _bulk("1", "2024-01-01", **{"Company response to consumer": "Closed with explanation"}),
+        _bulk("2", "2024-02-01", **{"Company response to consumer": "Closed with explanation"}),
+        _bulk("3", "2025-01-01", **{"Company response to consumer": "In progress"}),
+    ]
+    con = connect(make_interim(rows, []))
+    table = dict(company_response.sections(con))[
+        "Company response to consumer: rows by year received"
+    ]
+    assert "| Closed with explanation | 2 | 0 |" in table
+    assert "| In progress | 0 | 1 |" in table

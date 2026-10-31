@@ -15,3 +15,15 @@ Hand-written observations from the generated reports in this folder. Snapshot: b
 - **`State`** has 63 values, including `UNITED STATES MINOR OUTLYING ISLANDS` (1,584) and military codes (`AA`); 0.34% are null.
 - **`Company`** has 8,198 distinct names, or 8,191 after upper-casing and trimming. 24 rows have leading or trailing whitespace. Real name resolution is M2-07.
 - Rare nulls: `Issue` (6) and `Company response to consumer` (21).
+
+## M0-09 Company response ([02_company_response.md](02_company_response.md))
+
+- **There are three value regimes:**
+  - 2011–2012: `Closed with relief` / `Closed without relief`.
+  - 2011–2017: bare `Closed` (17.6K).
+  - From 2012: `Closed with explanation` / `with non-monetary relief` / `with monetary relief`.
+
+  `relief_rate` needs an explicit mapping for the old values (`Closed with relief` → relief; `Closed without relief` and `Closed` → no relief, or excluded). That's a metric decision, so I'll ask in M3-01.
+- **`In progress` is 623K rows, almost all from 2026 (622,907).** Those complaints are open, so they must be excluded from the closed-complaint denominator. `Untimely response` (35.7K) is also not closed.
+- **Non-monetary relief jumps** from about 44K a year (2021) to 261K (2022) and then 2.2M (2025), driven by the credit bureaus. Peer comparisons must be within product.
+- **`Company public response` nulls are partly structural.** The field effectively starts in 2015, so 2011–2014 is 100% null. `Company chooses not to provide a public response` (2014–2016) was replaced by `Company has responded to the consumer and the CFPB and chooses not to provide a public response` (2016 onward), and the two should be mapped together.
