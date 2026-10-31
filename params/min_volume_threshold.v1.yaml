@@ -1,0 +1,8 @@
+# Minimum complaint volume for a company to be included in rate comparisons (peer groups).
+# Released version: never edit; create v2 instead. Decided in M0-13, evidence in
+# docs/profiling/07_threshold.md.
+version: 1
+decided: 2026-10-31
+min_complaints: 100
+scope: per company, per product
+window: trailing 12 full calendar months before the snapshot date
