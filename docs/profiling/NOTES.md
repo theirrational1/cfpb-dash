@@ -41,3 +41,10 @@ Hand-written observations from the generated reports in this folder. Snapshot: b
 - **The exact-duplicate rate after normalisation is 47.5% overall**, a lower bound against the published 57.6% (near-duplicates are M6-01). It's concentrated in credit reporting (74.7% for the current label) and debt collection (20.5%).
 - **Credit card narratives are mostly original:** 9.3% duplicates under `Credit card` and 5.9% under `Credit card or prepaid card`. Mortgage is 0.4%, checking/savings 2.9%.
 - Credit card narratives by label: `Credit card` 129,144 plus `Credit card or prepaid card` 108,683, so about **238K** across both labels before the cutoff and mapping.
+
+## M0-15 Narrative coverage ([05_coverage.md](05_coverage.md))
+
+- Narratives start in **2015** (the consent-to-publish rollout); 2011–2014 have 0% coverage, which is structural.
+- **The overall decline in 2024–2026 is mostly credit reporting.** Its coverage falls from about 34% (2023) to 11% (2025-Q4) and 0.1% (2026). Other products hold about 40–60% through 2026-Q2.
+- **For credit cards (current label), monthly coverage is 38–53% from 2025-09 to 2026-06**, with one dip (2026-02: 26.8%), then 22.4% in 2026-07 and **0% from 2026-08**. That's a hard publication cut, not a gradual lag.
+- The PRD's "Mar 2026: 3.5%" is the all-products figure. Per product, the cutoff differs a lot.

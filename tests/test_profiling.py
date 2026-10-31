@@ -105,3 +105,44 @@ def test_duplicate_rate_hand_computed(make_interim):
     con = connect(make_interim(bulk, archive))
     # 3 narratives; ids 1 and 2 normalise to the same text -> 2 of 3 = 66.67%
     assert con.execute(narratives.dup_rate_sql()).fetchall() == [(3, 2, 66.67)]
+
+
+def test_coverage_by_month_hand_computed(make_interim):
+    from profiling import coverage
+
+    bulk = [
+        _bulk("1", "2024-01-05"),
+        _bulk("2", "2024-01-20"),
+        _bulk("3", "2024-02-01"),
+        _bulk("4", "2024-02-02"),
+    ]
+    archive = [
+        _narr("1", "2024-01-05", "text one"),
+        _narr("1", "2024-01-05", "text one", source_file="other.zip"),  # repeated id
+        _narr("3", "2024-02-01", ""),  # empty narrative does not count
+        _narr("9", "2024-02-01", "not in bulk"),
+    ]
+    con = connect(make_interim(bulk, archive))
+    assert con.execute(coverage.coverage_sql("month")).fetchall() == [
+        ("2024-01", 2, 1, 50.0),
+        ("2024-02", 2, 0, 0.0),
+    ]
+
+
+def test_coverage_product_quarter_hand_computed(make_interim):
+    from profiling import coverage
+
+    bulk = [
+        _bulk("1", "2024-01-05"),
+        _bulk("2", "2024-02-20"),
+        _bulk("3", "2024-04-01"),
+        _bulk("4", "2024-04-02", product="Mortgage"),
+        _bulk("5", "2022-12-31"),  # before 2023: excluded
+    ]
+    archive = [_narr("1", "2024-01-05", "a"), _narr("3", "2024-04-01", "b")]
+    con = connect(make_interim(bulk, archive))
+    # Only Credit card has narratives -> only column; Q1: 1 of 2, Q2: 1 of 1
+    assert con.execute(coverage.product_quarter_sql()).fetchall() == [
+        ("2024-Q1", 50.0),
+        ("2024-Q2", 100.0),
+    ]
