@@ -25,6 +25,8 @@ CFPB Complaint Intelligence: ingestion → DuckDB + dbt → MetricFlow semantic 
 
 ```bash
 uv sync
+uv run python -m ingestion.fetch_bulk     # download CFPB bulk zip → data/raw/bulk/ + MANIFEST.json
+uv run pytest -m data                     # recompute every checksum in data/raw/MANIFEST.json (slow, local only)
 uv run python -m ingestion.bulk           # backfill from CFPB bulk file
 uv run python -m ingestion.incremental    # daily API pull
 uv run dbt build --project-dir dbt        # models + tests
