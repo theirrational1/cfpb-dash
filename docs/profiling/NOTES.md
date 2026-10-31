@@ -60,3 +60,12 @@ Hand-written observations from the generated reports in this folder. Snapshot: b
 - **Company volume is extremely skewed.** The median company has 2–4 complaints per family in the trailing 12 months (2025-10 to 2026-09), and the p99 is in the thousands. Most companies are too small for any rate.
 - **At ≥100 complaints (trailing 12 months),** credit card has 50 eligible companies covering 96.2% of its complaints. The figures are 63 / 94.4% for checking/savings, 47 / 84.4% for mortgage, and 258 / 91.6% for debt collection.
 - **Precision at n = 100:** ±9.8 pp worst case (rate near 50%), ±5.9 pp for a rate near 10%. At n = 50: ±13.9 pp.
+
+## M0-12 Product rule ([08_product_rule.md](08_product_rule.md))
+
+These use a candidate cutoff (narratives received before 2026-07-01) and a candidate threshold (≥100 complaints in the trailing 12 months).
+
+- **Passing families:** credit reporting, debt collection, **credit card**, vehicle loan/lease, payday/personal loan.
+- **Failing on issue concentration (>50%):** checking/savings (53.8%), mortgage (53.8%), money transfer (56.5%), student loan (66.5%).
+- **Credit card details:** 226,366 narratives (107,697 since the Aug 2023 relabel), 50 companies above the threshold, top issue 26.4%, duplicate rate 6–9%.
+- **Credit reporting passes only narrowly** (top issue 49.7%). It's 75% templates and is about the bureaus, not lenders.

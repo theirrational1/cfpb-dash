@@ -197,3 +197,20 @@ def test_provisional_product_family(make_interim):
         "5": "Checking or savings",
         "6": "Credit reporting",
     }
+
+
+def test_threshold_and_product_rule_run(make_interim):
+    from profiling import product_rule, threshold
+
+    # window is [2025-07-01, 2026-07-01): max received is 2026-07-15
+    bulk = [_bulk(str(i), "2025-08-01", company=f"Co{i % 3}", Issue="Fees") for i in range(30)]
+    bulk.append(_bulk("99", "2026-07-15"))
+    archive = [_narr(str(i), "2025-08-01", f"text {i}") for i in range(10)]
+    con = connect(make_interim(bulk, archive))
+    assert (
+        "| Credit card | 3 | 30 |"
+        in dict(threshold.sections(con))["Companies per product family, trailing 12 months"]
+    )
+    # 10 narratives (< 20K) -> fails the rule; 3 companies with 10 each (< threshold 100) -> 0
+    rows = con.execute(product_rule.rule_sql()).fetchall()
+    assert rows == [("Credit card", 10, 10, 0, "Fees", 100.0, False)]
