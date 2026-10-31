@@ -22,3 +22,6 @@ __pycache__/
 local_llm/
 .claude/settings.local.json
 .DS_Store
+
+# Local-only docs
+PRD.md

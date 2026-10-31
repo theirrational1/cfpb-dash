@@ -69,6 +69,7 @@ data/             gitignored: raw/, snapshots/, duckdb file
 ## Data rules
 
 - **Never commit data** (raw files, DuckDB, narratives, results). `data/` is gitignored.
+- **Never commit `PRD.md`.** It is local only (gitignored); read and update it, but don't stage it.
 - Raw landing files are immutable; record checksums in `data/raw/MANIFEST.json`.
 - Evals run against a **frozen snapshot**, never live data.
 - Ingestion **fails loudly** on schema drift; never silently drop or rename fields.
