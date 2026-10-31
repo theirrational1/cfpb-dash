@@ -21,7 +21,7 @@ Small, specific tasks to implement `PRD.md`. TDD for every feature. One mileston
 **Track B — repo**
 - [x] M0-04 Create public repo; `uv init`; dev deps via `uv add --dev` (pytest, ruff, ty, prek)
 - [x] M0-05 `.gitignore` (data/, results/, *.duckdb; but keep `!data/raw/MANIFEST.json` tracked), `PRD.md`, `AGENTS.md`, `CLAUDE.md`, `TASKS.md`, `docs/decisions/`
-- [ ] M0-06 prek hooks (ruff, ty) + CI (GitHub Actions: ruff, ty, pytest)
+- [x] M0-06 prek hooks (ruff, ty) + CI (GitHub Actions: ruff, ty, pytest)
 - [ ] M0-07 Logging config module used by all entry points
 
 **Track C — profiling (after Track A), CLEANER Audit pass**
