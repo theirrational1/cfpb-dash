@@ -21,7 +21,7 @@ ARGS = {
 def _tool_call() -> ChatResult:
     return ChatResult(
         content=None,
-        tool_calls=[ToolCall(id="c1", name="query_metric", arguments=ARGS)],
+        tool_calls=[ToolCall.of("c1", "query_metric", ARGS)],
         usage=Usage(100, 20),
         model="fake",
     )

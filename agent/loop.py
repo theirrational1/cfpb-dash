@@ -123,7 +123,7 @@ def run(question: str, gateway: Gateway, warehouse: Warehouse, max_steps: int = 
                 "content": result.content or "",
                 "tool_calls": [
                     {"id": c.id, "type": "function",
-                     "function": {"name": c.name, "arguments": json.dumps(c.arguments)}}
+                     "function": {"name": c.name, "arguments": c.arguments_json}}
                     for c in result.tool_calls
                 ],
             }

@@ -9,8 +9,14 @@ PRICES_PER_MTOK: dict[str, tuple[float, float]] = {
 }
 
 
+class UnknownModelPrice(LookupError):
+    pass
+
+
 def cost_usd(model: str, usage: Usage) -> float:
     if model not in PRICES_PER_MTOK:
-        raise KeyError(f"no price for model {model!r}; add it to agent/adapters/pricing.py")
+        raise UnknownModelPrice(
+            f"no price for model {model!r}; add it to agent/adapters/pricing.py"
+        )
     price_in, price_out = PRICES_PER_MTOK[model]
     return (usage.input_tokens * price_in + usage.output_tokens * price_out) / 1_000_000

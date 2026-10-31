@@ -38,7 +38,7 @@ def _call() -> ChatResult:
         "filters": {"complaint__company": COMPANY},
         "time_range": ["2026-03-01", "2026-03-31"],
     }
-    return ChatResult(None, [ToolCall("c1", "query_metric", args)], Usage(100, 10), "fake")
+    return ChatResult(None, [ToolCall.of("c1", "query_metric", args)], Usage(100, 10), "fake")
 
 
 def _final(value) -> ChatResult:

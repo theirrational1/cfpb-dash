@@ -9,7 +9,7 @@ from dataclasses import asdict
 from pathlib import Path
 
 from agent.adapters.cache import JsonCache
-from agent.adapters.gateway import Gateway
+from agent.adapters.gateway import Budget, Gateway
 from agent.adapters.ollama import DEFAULT_MODEL, OllamaAdapter
 from agent.adapters.usage import UsageLog
 from agent.loop import run
@@ -26,10 +26,15 @@ def main() -> None:
     parser.add_argument("question")
     parser.add_argument("--model", default=DEFAULT_MODEL)
     parser.add_argument("--warehouse", type=Path, help="warehouse root (default data/warehouse)")
+    parser.add_argument("--budget-usd", type=float, default=0.10)
     args = parser.parse_args()
 
     gateway = Gateway(
-        OllamaAdapter(args.model), UsageLog(USAGE_DB), JsonCache(CACHE_DIR), f"ask-{uuid.uuid4()}"
+        OllamaAdapter(args.model),
+        UsageLog(USAGE_DB),
+        JsonCache(CACHE_DIR),
+        f"ask-{uuid.uuid4()}",
+        budget=Budget(cap_usd=args.budget_usd),
     )
     wh = Warehouse(args.warehouse) if args.warehouse else Warehouse()
     answer = run(args.question, gateway, wh)
