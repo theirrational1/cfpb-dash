@@ -33,3 +33,11 @@ Hand-written observations from the generated reports in this folder. Snapshot: b
 - **Two product taxonomy revisions:** **April 2017** (e.g. `Credit card` → `Credit card or prepaid card`, `Bank account or service` → `Checking or savings account`) and **August 2023** (`Credit card or prepaid card` → `Credit card` again, `Credit reporting, credit repair services, …` → `Credit reporting or other personal consumer reports`, the payday-loan label renamed again). The credit card switch-back happened between 2023-08-17 and 2023-08-25.
 - 21 product labels map to roughly 11 current products. Sub-products and issues churn even more: 296 product×sub-product/issue rows are retired and 196 introduced. The M2-06 mapping seed must cover both 2017 and 2023.
 - `Virtual currency` (18 rows) and `Other financial service` (1,056) are tiny retired products.
+
+## M0-11 Narratives ([04_narratives.md](04_narratives.md))
+
+- **3,851,415 complaints have a narrative**, out of 17.5M archive rows (no complaint ID repeats across archive files). 33 narrative IDs no longer exist in the bulk file.
+- Credit reporting dominates here too: the two credit-reporting labels hold 2.48M narratives (64%).
+- **The exact-duplicate rate after normalisation is 47.5% overall**, a lower bound against the published 57.6% (near-duplicates are M6-01). It's concentrated in credit reporting (74.7% for the current label) and debt collection (20.5%).
+- **Credit card narratives are mostly original:** 9.3% duplicates under `Credit card` and 5.9% under `Credit card or prepaid card`. Mortgage is 0.4%, checking/savings 2.9%.
+- Credit card narratives by label: `Credit card` 129,144 plus `Credit card or prepaid card` 108,683, so about **238K** across both labels before the cutoff and mapping.

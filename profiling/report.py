@@ -19,6 +19,7 @@ def connect(interim_dir: Path = INTERIM_DIR) -> duckdb.DuckDBPyConnection:
     if not (interim_dir / "INTERIM.json").is_file():
         raise FileNotFoundError(f"{interim_dir}/INTERIM.json missing; run profiling.interim")
     con = duckdb.connect()
+    con.execute("SET enable_progress_bar = false")
     for name in ("bulk", "narratives"):
         glob = str(interim_dir / name / "*.parquet").replace("'", "''")
         con.execute(f"CREATE VIEW {name} AS SELECT * FROM read_parquet('{glob}')")

@@ -89,3 +89,19 @@ def _narr(cid: str, received: str, txt: str | None, company: str = "Acme", **kw)
         "Consumer complaint narrative": txt,
         **kw,
     }
+
+
+def test_duplicate_rate_hand_computed(make_interim):
+    from profiling import narratives
+
+    bulk = [_bulk(str(i), "2024-01-01") for i in range(1, 6)]
+    archive = [
+        _narr("1", "2024-01-01", "My card was charged XXXX twice on 01/02/2024."),
+        _narr("2", "2024-01-01", "my card  was CHARGED xxxx twice on 03/04/2025"),
+        _narr("3", "2024-01-01", "A completely different complaint."),
+        _narr("4", "2024-01-01", None),  # no narrative: excluded
+        _narr("5", "2024-01-01", "   "),  # blank: excluded
+    ]
+    con = connect(make_interim(bulk, archive))
+    # 3 narratives; ids 1 and 2 normalise to the same text -> 2 of 3 = 66.67%
+    assert con.execute(narratives.dup_rate_sql()).fetchall() == [(3, 2, 66.67)]
