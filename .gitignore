@@ -1,0 +1,24 @@
+# Data: never committed, except the raw manifest.
+# (git can't re-include a file inside an ignored directory, hence the pattern chain.)
+data/*
+!data/raw/
+data/raw/*
+!data/raw/MANIFEST.json
+
+# Outputs
+results/
+evals/results/
+*.duckdb
+*.duckdb.wal
+
+# Python / tooling
+.venv/
+__pycache__/
+*.py[cod]
+.ruff_cache/
+.pytest_cache/
+
+# Local, not part of the project
+local_llm/
+.claude/settings.local.json
+.DS_Store

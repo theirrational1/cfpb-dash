@@ -1,0 +1,175 @@
+{
+  "manifest_version": 1,
+  "generated_at": "2026-10-31T00:12:22+00:00",
+  "notes": "retrieved_at taken from file modification time. Bulk download to be added after M0-02.",
+  "files": [
+    {
+      "path": "narratives/CCDB_Export_1_December_2011_through_April_2018.zip",
+      "source": "CFPB FOIA Reading Room \u2014 Consumer Complaint Database Narratives Archive",
+      "source_url": "https://www.consumerfinance.gov/foia-requests/foia-electronic-reading-room/cfpb-consumer-complaint-database-narratives-archive/",
+      "retrieved_at": "2026-10-30",
+      "size_bytes": 134688697,
+      "sha256": "9d4fabeb5db925ce4303e81ab448f44531303a995aec1a935abc09156f2fc533"
+    },
+    {
+      "path": "narratives/CCDB_Export_2_May_2018_through_April_2021.zip",
+      "source": "CFPB FOIA Reading Room \u2014 Consumer Complaint Database Narratives Archive",
+      "source_url": "https://www.consumerfinance.gov/foia-requests/foia-electronic-reading-room/cfpb-consumer-complaint-database-narratives-archive/",
+      "retrieved_at": "2026-10-30",
+      "size_bytes": 164598156,
+      "sha256": "4b33ffc92fa0236836228c5618b7247f0f59ffef35760a45175c858a0d5aaf45"
+    },
+    {
+      "path": "narratives/CCDB_Export_3_May_2021_through_October_2022.zip",
+      "source": "CFPB FOIA Reading Room \u2014 Consumer Complaint Database Narratives Archive",
+      "source_url": "https://www.consumerfinance.gov/foia-requests/foia-electronic-reading-room/cfpb-consumer-complaint-database-narratives-archive/",
+      "retrieved_at": "2026-10-30",
+      "size_bytes": 128680448,
+      "sha256": "b8b195ff7d6b8e137bd0f37d13d90c0efb4f216c08dff3c4af91f02af3756130"
+    },
+    {
+      "path": "narratives/CCDB_Export_4_November_2022_through_August_2023.zip",
+      "source": "CFPB FOIA Reading Room \u2014 Consumer Complaint Database Narratives Archive",
+      "source_url": "https://www.consumerfinance.gov/foia-requests/foia-electronic-reading-room/cfpb-consumer-complaint-database-narratives-archive/",
+      "retrieved_at": "2026-10-30",
+      "size_bytes": 115518181,
+      "sha256": "547e8bdb07961861d4bacabff74fd2dd7358c04d225b492b286c37920cb39921"
+    },
+    {
+      "path": "narratives/CCDB_Export_5_September_2023_through_March_2024.zip",
+      "source": "CFPB FOIA Reading Room \u2014 Consumer Complaint Database Narratives Archive",
+      "source_url": "https://www.consumerfinance.gov/foia-requests/foia-electronic-reading-room/cfpb-consumer-complaint-database-narratives-archive/",
+      "retrieved_at": "2026-10-30",
+      "size_bytes": 100880669,
+      "sha256": "993747363e52239e4762b804662d7f604f976a139de4f729f613329d3d8c7206"
+    },
+    {
+      "path": "narratives/CCDB_Export_6_April_2024_through_July_2024.zip",
+      "source": "CFPB FOIA Reading Room \u2014 Consumer Complaint Database Narratives Archive",
+      "source_url": "https://www.consumerfinance.gov/foia-requests/foia-electronic-reading-room/cfpb-consumer-complaint-database-narratives-archive/",
+      "retrieved_at": "2026-10-30",
+      "size_bytes": 77142558,
+      "sha256": "c8a6fb0d98287958e2c19b47e1a4211c4e43225d27123a3ca08d730a2b4ae0a5"
+    },
+    {
+      "path": "narratives/CCDB_Export_7_August_2024_through_October_2024.zip",
+      "source": "CFPB FOIA Reading Room \u2014 Consumer Complaint Database Narratives Archive",
+      "source_url": "https://www.consumerfinance.gov/foia-requests/foia-electronic-reading-room/cfpb-consumer-complaint-database-narratives-archive/",
+      "retrieved_at": "2026-10-30",
+      "size_bytes": 71365591,
+      "sha256": "f053000c342bfd08bc6f8f382290f623e34b166cb56760c0726ed15e296a6d74"
+    },
+    {
+      "path": "narratives/CCDB_Export_8_November_2024_through_December_2024.zip",
+      "source": "CFPB FOIA Reading Room \u2014 Consumer Complaint Database Narratives Archive",
+      "source_url": "https://www.consumerfinance.gov/foia-requests/foia-electronic-reading-room/cfpb-consumer-complaint-database-narratives-archive/",
+      "retrieved_at": "2026-10-30",
+      "size_bytes": 52563546,
+      "sha256": "24b3326a954c0edeff33318b157d12eef5a59547f6f274f9236f1ceaba988a74"
+    },
+    {
+      "path": "narratives/CCDB_Export_9_January_2025_through_February_2025.zip",
+      "source": "CFPB FOIA Reading Room \u2014 Consumer Complaint Database Narratives Archive",
+      "source_url": "https://www.consumerfinance.gov/foia-requests/foia-electronic-reading-room/cfpb-consumer-complaint-database-narratives-archive/",
+      "retrieved_at": "2026-10-30",
+      "size_bytes": 75475199,
+      "sha256": "11c18bb0973eed8f5e4f66e2979346af0671a3aefcb5a6b9eec73009d53cff64"
+    },
+    {
+      "path": "narratives/CCDB_Export_10_March_2025_through_April_2025.zip",
+      "source": "CFPB FOIA Reading Room \u2014 Consumer Complaint Database Narratives Archive",
+      "source_url": "https://www.consumerfinance.gov/foia-requests/foia-electronic-reading-room/cfpb-consumer-complaint-database-narratives-archive/",
+      "retrieved_at": "2026-10-30",
+      "size_bytes": 68866998,
+      "sha256": "356822a5e9f295398f2e75bfff25b4760365845432c31e87e689be2c2c0c88ef"
+    },
+    {
+      "path": "narratives/CCDB_Export_11_May_2025_through_June_2025.zip",
+      "source": "CFPB FOIA Reading Room \u2014 Consumer Complaint Database Narratives Archive",
+      "source_url": "https://www.consumerfinance.gov/foia-requests/foia-electronic-reading-room/cfpb-consumer-complaint-database-narratives-archive/",
+      "retrieved_at": "2026-10-30",
+      "size_bytes": 74546009,
+      "sha256": "b7c8475a183e5a01f72aec794d6bc9d8a12a98cce272b3b406d9a0b067479adb"
+    },
+    {
+      "path": "narratives/CCDB_Export_12_July_2025_through_August_2025.zip",
+      "source": "CFPB FOIA Reading Room \u2014 Consumer Complaint Database Narratives Archive",
+      "source_url": "https://www.consumerfinance.gov/foia-requests/foia-electronic-reading-room/cfpb-consumer-complaint-database-narratives-archive/",
+      "retrieved_at": "2026-10-30",
+      "size_bytes": 84153614,
+      "sha256": "dcc75521581b124f13d6d4b62c2947ccd06a017a09b1dfa7ddeb2d73548554fa"
+    },
+    {
+      "path": "narratives/CCDB_Export_13_September_2025_through_October_2025.zip",
+      "source": "CFPB FOIA Reading Room \u2014 Consumer Complaint Database Narratives Archive",
+      "source_url": "https://www.consumerfinance.gov/foia-requests/foia-electronic-reading-room/cfpb-consumer-complaint-database-narratives-archive/",
+      "retrieved_at": "2026-10-30",
+      "size_bytes": 67340083,
+      "sha256": "4a48c4e32ab78d8b1c3c910c4e14a62cd9fb50355e60708c1f85e5601858bc9f"
+    },
+    {
+      "path": "narratives/CCDB_Export_14_November_2025_through_December_2025.zip",
+      "source": "CFPB FOIA Reading Room \u2014 Consumer Complaint Database Narratives Archive",
+      "source_url": "https://www.consumerfinance.gov/foia-requests/foia-electronic-reading-room/cfpb-consumer-complaint-database-narratives-archive/",
+      "retrieved_at": "2026-10-30",
+      "size_bytes": 63867562,
+      "sha256": "44fd05c01c9e90ae1abd6e0659898ec7362e7a6a53740e6b18a8d0a0ff3749e7"
+    },
+    {
+      "path": "narratives/CCDB_Export_15_January_2026_through_February_2026.zip",
+      "source": "CFPB FOIA Reading Room \u2014 Consumer Complaint Database Narratives Archive",
+      "source_url": "https://www.consumerfinance.gov/foia-requests/foia-electronic-reading-room/cfpb-consumer-complaint-database-narratives-archive/",
+      "retrieved_at": "2026-10-30",
+      "size_bytes": 36832036,
+      "sha256": "437eee7adcc3e4342d1eafd8d716c4ef149e29c6a68c5ce3c379d1dc82c14b22"
+    },
+    {
+      "path": "narratives/CCDB_Export_16_March_2026.zip",
+      "source": "CFPB FOIA Reading Room \u2014 Consumer Complaint Database Narratives Archive",
+      "source_url": "https://www.consumerfinance.gov/foia-requests/foia-electronic-reading-room/cfpb-consumer-complaint-database-narratives-archive/",
+      "retrieved_at": "2026-10-30",
+      "size_bytes": 22053643,
+      "sha256": "0d337dac973d1fdf874c1d9cd5909502bb29a71334543572f0b1aedcd5a58d24"
+    },
+    {
+      "path": "narratives/CCDB_Export_17_April_2026.zip",
+      "source": "CFPB FOIA Reading Room \u2014 Consumer Complaint Database Narratives Archive",
+      "source_url": "https://www.consumerfinance.gov/foia-requests/foia-electronic-reading-room/cfpb-consumer-complaint-database-narratives-archive/",
+      "retrieved_at": "2026-10-30",
+      "size_bytes": 22963936,
+      "sha256": "6f2ef5624c1bd76abcf2d39f693a0571c91fc8c08edf4dd7338516a3f913b30c"
+    },
+    {
+      "path": "narratives/CCDB_Export_18_May_2026.zip",
+      "source": "CFPB FOIA Reading Room \u2014 Consumer Complaint Database Narratives Archive",
+      "source_url": "https://www.consumerfinance.gov/foia-requests/foia-electronic-reading-room/cfpb-consumer-complaint-database-narratives-archive/",
+      "retrieved_at": "2026-10-30",
+      "size_bytes": 21033928,
+      "sha256": "311fe537afac63230d52f41529bb91361ce5a9844d7450866538bb0456bceade"
+    },
+    {
+      "path": "narratives/CCDB_Export_19_June_2026.zip",
+      "source": "CFPB FOIA Reading Room \u2014 Consumer Complaint Database Narratives Archive",
+      "source_url": "https://www.consumerfinance.gov/foia-requests/foia-electronic-reading-room/cfpb-consumer-complaint-database-narratives-archive/",
+      "retrieved_at": "2026-10-30",
+      "size_bytes": 19624767,
+      "sha256": "3021c8af9eeed4971a92f15be21c7ce08cf3c1337151de255e5b12bf782049df"
+    },
+    {
+      "path": "narratives/CCDB_Export_20_July_2026.zip",
+      "source": "CFPB FOIA Reading Room \u2014 Consumer Complaint Database Narratives Archive",
+      "source_url": "https://www.consumerfinance.gov/foia-requests/foia-electronic-reading-room/cfpb-consumer-complaint-database-narratives-archive/",
+      "retrieved_at": "2026-10-30",
+      "size_bytes": 16958404,
+      "sha256": "aafebbaaf0962c3d29532411ac2133c01bae830b7ea6ed1931a6e42278437d18"
+    },
+    {
+      "path": "narratives/CCDB_Export_21_August_2026.zip",
+      "source": "CFPB FOIA Reading Room \u2014 Consumer Complaint Database Narratives Archive",
+      "source_url": "https://www.consumerfinance.gov/foia-requests/foia-electronic-reading-room/cfpb-consumer-complaint-database-narratives-archive/",
+      "retrieved_at": "2026-10-30",
+      "size_bytes": 10501839,
+      "sha256": "c64b8147b499d6236d7d591bfdbe8db45af80694a1afb6bd6a739f2789b8b2b1"
+    }
+  ]
+}
