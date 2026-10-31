@@ -20,6 +20,7 @@ DEFAULT_ROOT = REPO_ROOT / "data" / "warehouse"
 @dataclass(frozen=True)
 class Warehouse:
     root: Path = DEFAULT_ROOT
+    project_dir: Path = DBT_DIR
 
     @property
     def duckdb_path(self) -> Path:
@@ -30,6 +31,10 @@ class Warehouse:
         return self.root / "raw" / "complaints.parquet"
 
     @property
+    def semantic_manifest(self) -> Path:
+        return self.project_dir / "target" / "semantic_manifest.json"
+
+    @property
     def snapshot_json(self) -> Path:
         return self.raw_parquet.parent / "snapshot.json"
 
@@ -37,8 +42,8 @@ class Warehouse:
         # No DBT_TARGET_PATH: `mf` always reads dbt/target/semantic_manifest.json. Target holds
         # project artifacts (same for every warehouse), so sharing it is safe.
         return {
-            "DBT_PROJECT_DIR": str(DBT_DIR),
-            "DBT_PROFILES_DIR": str(DBT_DIR),
+            "DBT_PROJECT_DIR": str(self.project_dir),
+            "DBT_PROFILES_DIR": str(self.project_dir),
             "DBT_LOG_PATH": str(self.root / "dbt_logs"),
             "CFPB_DUCKDB_PATH": str(self.duckdb_path),
             "CFPB_RAW_PARQUET": str(self.raw_parquet),

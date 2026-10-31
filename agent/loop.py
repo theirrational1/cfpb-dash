@@ -12,14 +12,14 @@ from typing import Any
 
 from agent.adapters.base import Message, ToolSpec
 from agent.adapters.gateway import Gateway
+from agent.tools.catalog import load_catalog
 from agent.tools.query_metric import Provenance, query_metric
-from core.warehouse import DBT_DIR, Warehouse
+from core.warehouse import Warehouse
 
 logger = logging.getLogger(__name__)
 
 PROMPT_VERSION = "system.v1"
 PROMPT_PATH = Path(__file__).parent / "prompts" / f"{PROMPT_VERSION}.md"
-SEMANTIC_MANIFEST = DBT_DIR / "target" / "semantic_manifest.json"
 TOOL_ARGS = {"metrics", "group_by", "filters", "time_range"}
 FENCE = re.compile(r"^```(?:json)?\s*(.*?)\s*```$", re.DOTALL)
 
@@ -37,13 +37,7 @@ class Answer:
     steps: int
 
 
-def available_metrics() -> list[str]:
-    if not SEMANTIC_MANIFEST.is_file():
-        raise FileNotFoundError(f"{SEMANTIC_MANIFEST} missing; run dbt build first")
-    return [m["name"] for m in json.loads(SEMANTIC_MANIFEST.read_text())["metrics"]]
-
-
-def tool_specs() -> list[ToolSpec]:
+def tool_specs(warehouse: Warehouse) -> list[ToolSpec]:
     return [
         {
             "type": "function",
@@ -55,7 +49,10 @@ def tool_specs() -> list[ToolSpec]:
                     "properties": {
                         "metrics": {
                             "type": "array",
-                            "items": {"type": "string", "enum": available_metrics()},
+                            "items": {
+                                "type": "string",
+                                "enum": sorted(load_catalog(warehouse).metrics),
+                            },
                         },
                         "group_by": {"type": "array", "items": {"type": "string"}},
                         "filters": {
@@ -106,7 +103,7 @@ def run(question: str, gateway: Gateway, warehouse: Warehouse, max_steps: int = 
         {"role": "system", "content": PROMPT_PATH.read_text()},
         {"role": "user", "content": question},
     ]
-    tools = tool_specs()
+    tools = tool_specs(warehouse)
     provenance: list[Provenance] = []
     returned_values: set[float] = set()
 
