@@ -1,6 +1,6 @@
 # Null decisions (draft v0, M0-14)
 
-> **Status: first draft from M0 profiling, not yet enforced.** Each entry becomes a dbt test in M2-05 before the staging model ships. Entries marked **⚠ needs decision** are open questions for Saksham.
+> **Status: decisions reviewed by Saksham 2026-10-31; not yet enforced.** Each entry becomes a dbt test in M2-05 before the staging model ships. Entries marked **✔ decided** were open questions resolved in review.
 >
 > Evidence: `docs/profiling/01_overview.md`, `02_company_response.md`, `NOTES.md`. Snapshot `complaints_2026-10-31.csv.zip` (18,823,456 rows).
 
@@ -17,7 +17,7 @@ CLEANER null categories: **meaningful blank** (encode explicitly), **unknown** (
 - **Evidence:** six 2024 complaints (five checking/savings, one credit reporting), all closed. Every other complaint has an issue.
 - **Decision:** keep the rows for counts. Exclude them from issue-based metrics and report them as a counted "issue missing" exclusion.
 - **Test:** null count ≤ 10 (error above, so growth gets noticed).
-- **⚠ needs decision:** whether `issue_share` denominators include or exclude these rows (a metric definition, M3-01).
+- **✔ decided:** `issue_share` **excludes** null-issue rows from numerator and denominator, so shares sum to 100%. The 6 rows stay in `complaint_count` and are reported as a counted exclusion.
 
 ### `sub_issue` — 946,495 nulls (5.03%) — **structural**
 - **Evidence:** whole product/issue combinations have no sub-issues. For example, `Money transfer…` is 100% null and `Credit reporting… / Problem with fraud alerts or security freezes` is 100% null. Mortgage is 81% null.
@@ -26,12 +26,12 @@ CLEANER null categories: **meaningful blank** (encode explicitly), **unknown** (
 
 ### `company_public_response` — 8,435,956 nulls (44.8%) — **structural before 2015; then meaningful blank or not-yet-available**
 - **Evidence:** 100% null 2011–2014 (the option effectively starts in 2015). From 2016, about 41–47% null among closed complaints and 100% null for `In progress` and `Untimely response`. Separately, the explicit value "Company … chooses not to provide a public response" exists, so a null is *not* the same as an explicit opt-out.
-- **Proposed decision:**
+- **Decision:**
   - received before 2015-01-01 → structural (null, period flagged);
-  - `In progress` / `Untimely response` → unknown (not yet available);
-  - closed from 2015 → meaningful blank, encoded as `'none_given'`.
-- **Test:** accepted values (the 11 current values plus `'none_given'`), and null only when structural or unknown.
-- **⚠ needs decision:** whether a null on a closed complaint means "company gave no public response" (`'none_given'`) for `public_response_rate`.
+  - `In progress` → unknown (not yet available; null);
+  - closed **or `Untimely response`** from 2015 → meaningful blank, encoded as `'none_given'`. An untimely response is still the company's response and says something about it.
+- **Test:** accepted values (the 11 current values plus `'none_given'`); null only when received before 2015 or `In progress`.
+- **✔ decided:** a blank on a closed or untimely complaint means "company gave no public response" (`'none_given'`) for `public_response_rate`.
 
 ### `state` — 63,583 nulls (0.34%) — **unknown**
 - **Evidence:** consumer didn't provide it. It peaks at 2.85% in 2018 and is about 0.1–0.3% from 2022. There are also non-state values: `UNITED STATES MINOR OUTLYING ISLANDS` and military codes (`AA`, `AE`, `AP`).
@@ -40,9 +40,8 @@ CLEANER null categories: **meaningful blank** (encode explicitly), **unknown** (
 
 ### `zip_code` — 3,426 nulls (0.02%), plus 139,165 `XXXXX` and ~100 malformed — **unknown / error**
 - **Evidence:** 93.2% are 5 digits, 6.0% are masked to 3 digits + `XX`, 139K are fully masked as `XXXXX`, and about 100 are malformed (`3008-`, `89!01`).
-- **Proposed decision:** keep the raw value. Derive `zip3` (the first 3 digits where present); `XXXXX` → unknown; malformed → null with a counted reason.
-- **Test:** the derived `zip3` matches `^[0-9]{3}$` or is null; the malformed count is logged.
-- **⚠ needs decision:** no planned metric uses ZIP. Should staging drop it (CLEANER Limit) instead?
+- **✔ decided: dropped at staging (CLEANER Limit).** No planned metric, dimension or filter uses ZIP. It stays in the raw file, so it can be brought back with a revised decision if a consumer appears.
+- **Test:** staging column list excludes `zip_code` (schema test on the staging model).
 
 ### `tags` — 17,993,831 nulls (95.6%) — **meaningful blank**
 - **Evidence:** null means no tag applies. There are three values: `Older American`, `Servicemember`, and the combined `Older American, Servicemember`.
@@ -58,7 +57,7 @@ CLEANER null categories: **meaningful blank** (encode explicitly), **unknown** (
 
 `complaint_id` (also `unique`, integer), `date_received`, `date_sent_to_company` (both parse as dates), `product`, `company`, `submitted_via`, `timely`. These have zero nulls today, so a null is a source change and fails the build.
 
-- **Related, not a null:** 7,050 complaints have `date_sent_to_company` exactly one day **before** `date_received`. **⚠ needs decision** for `forwarding_lag_days` (M2-08): keep −1, clamp to 0, or exclude with a count.
+- **Related, not a null:** 7,050 complaints have `date_sent_to_company` exactly one day **before** `date_received`. **✔ decided:** `forwarding_lag_days` **keeps −1** as-is. We'll check its effect on the metrics (M3) before deciding anything further; a test pins the count of negative lags so a change is noticed.
 
 ## Narrative archive
 
