@@ -31,7 +31,7 @@ Small, specific tasks to implement `PRD.md`. TDD for every feature. One mileston
 - [x] M0-11 Narrative counts by product and company; duplicate/template rate estimate
 - [x] M0-12 Apply product rule (≥20K narratives, ≥15 companies above threshold, no issue >50%, bank-analyst relevant; default credit cards); record in PRD decision log
 - [x] M0-13 Draft minimum-volume threshold (versioned parameter)
-- [ ] M0-14 First draft of `docs/decisions/nulls.md` from profiling
+- [x] M0-14 First draft of `docs/decisions/nulls.md` from profiling
 - [x] M0-15 Narrative coverage by month (share of complaints with a narrative) → set the reliable cutoff month; record in PRD
 - [x] M0-16 Archive vs bulk: overlap by `complaint_id`, records only in one, structured-field mismatches (expected for recent complaints)
 
