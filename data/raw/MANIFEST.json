@@ -1,7 +1,7 @@
 {
   "manifest_version": 1,
-  "generated_at": "2026-10-31T00:12:22+00:00",
-  "notes": "retrieved_at taken from file modification time. Bulk download to be added after M0-02.",
+  "generated_at": "2026-10-31T18:49:08+00:00",
+  "notes": "Narrative files: retrieved_at taken from file modification time. Bulk file: retrieved_at is the download date (ingestion.fetch_bulk).",
   "files": [
     {
       "path": "narratives/CCDB_Export_1_December_2011_through_April_2018.zip",
@@ -170,6 +170,14 @@
       "retrieved_at": "2026-10-30",
       "size_bytes": 10501839,
       "sha256": "c64b8147b499d6236d7d591bfdbe8db45af80694a1afb6bd6a739f2789b8b2b1"
+    },
+    {
+      "path": "bulk/complaints_2026-10-31.csv.zip",
+      "source": "CFPB Consumer Complaint Database \u2014 bulk download (CSV)",
+      "source_url": "https://files.consumerfinance.gov/ccdb/complaints.csv.zip",
+      "retrieved_at": "2026-10-31",
+      "size_bytes": 361040925,
+      "sha256": "29c44f21534e5b70eb4ec63c3c90315e97b6d7316fd1641e6c09f2111195fc94"
     }
   ]
 }

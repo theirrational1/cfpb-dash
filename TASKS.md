@@ -15,8 +15,8 @@ Small, specific tasks to implement `PRD.md`. TDD for every feature. One mileston
 
 **Track A — capture (do first)**
 - [x] M0-01 **(you) URGENT:** download all 21 narrative archive files from the CFPB FOIA Reading Room → `data/raw/narratives/`
-- [ ] M0-02 Download CFPB bulk file → `data/raw/`
-- [ ] M0-03 Write `data/raw/MANIFEST.json` (url, retrieved date, size, sha256 per file) + test that verifies checksums *(manifest written for the 21 narrative files; add bulk file after M0-02; test still todo)*
+- [x] M0-02 Download CFPB bulk file → `data/raw/`
+- [x] M0-03 Write `data/raw/MANIFEST.json` (url, retrieved date, size, sha256 per file) + test that verifies checksums *(manifest written for the 21 narrative files; add bulk file after M0-02; test still todo)*
 
 **Track B — repo**
 - [x] M0-04 Create public repo; `uv init`; dev deps via `uv add --dev` (pytest, ruff, ty, prek)
