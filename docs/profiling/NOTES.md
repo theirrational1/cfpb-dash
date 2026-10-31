@@ -54,3 +54,9 @@ Hand-written observations from the generated reports in this folder. Snapshot: b
 - **The archive covers complaints received up to 2026-08-31** (sent up to 2026-09-11; files built 2026-09-13), not Aug 14 as the PRD states.
 - **The ID overlap is near-total through 2025** (single-digit stragglers). In 2026: 4.81M in both, **37,912 archive-only** (complaints since removed from the public database) and 1.33M bulk-only (received after the archive cut).
 - **Structured fields agree almost perfectly through 2025.** In 2026, `Company response to consumer` differs on 9.1% and `Company public response` on 7.7% of shared IDs, because open complaints have since closed. `Company` differs on 0.01–0.10% in every year (name changes or reassignment). This supports "bulk owns structured fields".
+
+## M0-13 Volume threshold ([07_threshold.md](07_threshold.md))
+
+- **Company volume is extremely skewed.** The median company has 2–4 complaints per family in the trailing 12 months (2025-10 to 2026-09), and the p99 is in the thousands. Most companies are too small for any rate.
+- **At ≥100 complaints (trailing 12 months),** credit card has 50 eligible companies covering 96.2% of its complaints. The figures are 63 / 94.4% for checking/savings, 47 / 84.4% for mortgage, and 258 / 91.6% for debt collection.
+- **Precision at n = 100:** ±9.8 pp worst case (rate near 50%), ±5.9 pp for a rate near 10%. At n = 50: ±13.9 pp.

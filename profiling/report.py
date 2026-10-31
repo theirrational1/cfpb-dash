@@ -34,7 +34,29 @@ def connect(interim_dir: Path = INTERIM_DIR) -> duckdb.DuckDBPyConnection:
            SELECT "Complaint ID" AS complaint_id, "Consumer complaint narrative" AS txt
            FROM archive WHERE trim("Consumer complaint narrative") <> ''"""
     )
+    con.execute(f"CREATE VIEW bulk_f AS SELECT *, {PRODUCT_FAMILY} AS product_family FROM bulk")
     return con
+
+
+# PROVISIONAL product families across the 2017 and 2023 relabels, for profiling only.
+# The governed mapping is the M2-06 seed table; do not reuse this in models or metrics.
+PRODUCT_FAMILY = """CASE
+    WHEN "Product" = 'Credit card or prepaid card'
+         AND "Sub-product" IN ('General-purpose credit card or charge card', 'Store credit card')
+         THEN 'Credit card'
+    WHEN "Product" = 'Credit card or prepaid card' THEN 'Prepaid card'
+    WHEN "Product" IN ('Credit card', 'Prepaid card', 'Mortgage', 'Debt collection',
+                       'Student loan', 'Debt or credit management') THEN "Product"
+    WHEN "Product" LIKE 'Credit reporting%' THEN 'Credit reporting'
+    WHEN "Product" IN ('Bank account or service', 'Checking or savings account')
+         THEN 'Checking or savings'
+    WHEN "Product" IN ('Money transfers', 'Virtual currency',
+                       'Money transfer, virtual currency, or money service') THEN 'Money transfer'
+    WHEN "Product" = 'Vehicle loan or lease'
+         OR ("Product" = 'Consumer Loan' AND "Sub-product" IN ('Vehicle loan', 'Vehicle lease'))
+         THEN 'Vehicle loan or lease'
+    WHEN "Product" LIKE 'Payday loan%' OR "Product" = 'Consumer Loan' THEN 'Payday or personal loan'
+    ELSE "Product" END"""
 
 
 def _cell(value: object) -> str:

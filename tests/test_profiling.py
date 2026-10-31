@@ -169,3 +169,31 @@ def test_archive_vs_bulk_hand_computed(make_interim):
             "Field mismatch % on shared ids, by year received (bulk)"
         ]
     )
+
+
+def test_provisional_product_family(make_interim):
+    bulk = [
+        _bulk(
+            "1", "2020-01-01", product="Credit card or prepaid card", **{"Sub-product": "Gift card"}
+        ),
+        _bulk(
+            "2",
+            "2020-01-01",
+            product="Credit card or prepaid card",
+            **{"Sub-product": "Store credit card"},
+        ),
+        _bulk("3", "2016-01-01", product="Consumer Loan", **{"Sub-product": "Vehicle loan"}),
+        _bulk("4", "2016-01-01", product="Consumer Loan", **{"Sub-product": "Installment loan"}),
+        _bulk("5", "2016-01-01", product="Bank account or service"),
+        _bulk("6", "2024-01-01", product="Credit reporting or other personal consumer reports"),
+    ]
+    con = connect(make_interim(bulk, []))
+    got = dict(con.execute('SELECT "Complaint ID", product_family FROM bulk_f').fetchall())
+    assert got == {
+        "1": "Prepaid card",
+        "2": "Credit card",
+        "3": "Vehicle loan or lease",
+        "4": "Payday or personal loan",
+        "5": "Checking or savings",
+        "6": "Credit reporting",
+    }
