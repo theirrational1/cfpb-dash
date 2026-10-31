@@ -21,3 +21,4 @@ def test_app_renders_chart_for_selected_company(warehouse, monkeypatch):
     assert at.subheader[0].value == "Complaints per month: SYNCHRONY FINANCIAL"
     caption = at.caption[0].value
     assert "complaint_count" in caption and "Data snapshot: 2026-10-31" in caption
+    assert "Time range: 2025-01 to 2026-06" in caption

@@ -12,14 +12,16 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import streamlit as st  # noqa: E402
 
-from agent.tools.query_metric import MetricResult, query_metric  # noqa: E402
+from agent.tools.query_metric import MetricResult, query_metric, read_snapshot_stamp  # noqa: E402
 from core.warehouse import Warehouse  # noqa: E402
 
 METRIC = "complaint_count"
 
 
+# Cached functions take the warehouse build stamp as an argument, so a rebuilt warehouse
+# (new snapshot or new build) never serves numbers cached from the previous one.
 @st.cache_data(show_spinner=False)
-def companies(root: str, project: str) -> list[str]:
+def companies(root: str, project: str, build: str) -> list[str]:
     wh = Warehouse(Path(root), Path(project))
     result = query_metric([METRIC], group_by=["complaint__company"], warehouse=wh)
     ranked = sorted(result.rows, key=lambda r: r[METRIC] or 0, reverse=True)
@@ -27,7 +29,7 @@ def companies(root: str, project: str) -> list[str]:
 
 
 @st.cache_data(show_spinner=False)
-def monthly(root: str, project: str, company: str) -> MetricResult:
+def monthly(root: str, project: str, build: str, company: str) -> MetricResult:
     return query_metric(
         [METRIC],
         group_by=["metric_time__month"],
@@ -40,16 +42,22 @@ def main() -> None:
     st.set_page_config(page_title="CFPB Complaint Intelligence", layout="wide")
     st.title("CFPB Complaint Intelligence")
     wh = Warehouse.from_env()
+    stamp = read_snapshot_stamp(wh)
+    build = f"{stamp['source_sha256']}@{stamp['built_at']}"
     root, project = str(wh.root), str(wh.project_dir)
-    company = st.selectbox("Company", companies(root, project))
-    result = monthly(root, project, company)
+
+    company = st.selectbox("Company", companies(root, project, build))
+    result = monthly(root, project, build, company)
     st.subheader(f"Complaints per month: {company}")
     st.line_chart(result.rows, x="metric_time__month", y=METRIC)
+
     p = result.provenance
+    months = [str(r["metric_time__month"])[:7] for r in result.rows]
+    span = f"{months[0]} to {months[-1]}" if months else "no data"
     st.caption(
-        f"Metric: {', '.join(p.metrics)} · Filters: {p.filters} · "
-        f"Data snapshot: {p.snapshot_date}. Complaints are unverified allegations; "
-        "counts are not rates."
+        f"Metric: {', '.join(p.metrics)} · Filters: {p.filters} · Time range: {span} "
+        f"(months with no complaints show 0) · Data snapshot: {p.snapshot_date}. "
+        "Complaints are unverified allegations; counts are not rates."
     )
 
 

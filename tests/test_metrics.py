@@ -47,3 +47,21 @@ def test_complaint_count_total_matches_sql(warehouse, tmp_path):
 
 def test_validate_configs(warehouse):
     run_cli("mf", ["validate-configs"], warehouse)
+
+
+def test_months_without_complaints_are_zero_not_missing(tmp_path, fixture_csv, dbt_project):
+    """Review #13: an empty month must be 0 in the metric, so charts don't join across gaps."""
+    from tests.conftest import build_warehouse
+
+    with fixture_csv.open() as f:
+        lines = f.readlines()
+    gap = tmp_path / "gap.csv"  # drop every 2025-06 complaint
+    gap.write_text("".join(line for line in lines if not line.startswith("2025-06")))
+    wh = build_warehouse(tmp_path / "wh", gap, "2026-10-31", dbt_project)
+
+    rows = _mf_rows(
+        wh, tmp_path, ["--metrics", "complaint_count", "--group-by", "metric_time__month"]
+    )
+    by_month = {r["metric_time__month"][:7]: int(r["complaint_count"]) for r in rows}
+    assert by_month["2025-06"] == 0
+    assert min(by_month) == "2025-01" and max(by_month) == "2026-06"  # spine bounded to data

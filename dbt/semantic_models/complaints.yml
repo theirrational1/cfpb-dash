@@ -27,7 +27,12 @@ semantic_models:
 metrics:
   - name: complaint_count
     label: Complaint count
-    description: Count of complaints (PRD §7). Counts are not rates; no size denominator.
+    description: >-
+      Count of complaints (PRD §7). Counts are not rates; no size denominator.
+      Periods with no complaints are 0 (joined to the time spine), not missing.
     type: simple
     type_params:
-      measure: complaints
+      measure:
+        name: complaints
+        fill_nulls_with: 0
+        join_to_timespine: true
