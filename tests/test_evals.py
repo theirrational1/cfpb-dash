@@ -118,3 +118,15 @@ def test_budget_cap_stops_run_and_keeps_partial_results(
         )
     [results] = list((tmp_path / "results").glob("*.jsonl"))
     assert len(results.read_text().splitlines()) == 1  # case 1 recorded before the cap hit
+
+
+def test_committed_dev_datasets_load_and_ground_truth_runs(warehouse):
+    """Read-only check of the locked datasets: they parse and every ground truth is one value."""
+    from core.warehouse import REPO_ROOT
+    from evals.harness.runner import ground_truth
+
+    files = sorted((REPO_ROOT / "evals" / "datasets" / "dev").glob("*.toml"))
+    assert files, "no dev datasets"
+    for path in files:
+        for case in load_cases(path):
+            assert isinstance(ground_truth(case, warehouse), int | float)

@@ -1,0 +1,13 @@
+# E1 answer accuracy, dev split. LOCKED: agents must not edit (AGENTS.md).
+# Ground truth is SQL on the staging model, independent of fct_complaints and MetricFlow.
+
+[[cases]]
+id = "e1-001"
+question = "How many complaints did CITIBANK, N.A. receive in March 2026?"
+ground_truth_sql = """
+SELECT count(*)
+FROM stg_complaints
+WHERE company = 'CITIBANK, N.A.'
+  AND date_received >= DATE '2026-03-01'
+  AND date_received < DATE '2026-04-01'
+"""

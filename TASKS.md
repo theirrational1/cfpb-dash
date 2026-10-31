@@ -46,7 +46,7 @@ Small, specific tasks to implement `PRD.md`. TDD for every feature. One mileston
 - [x] M1-05 Streamlit page: company picker + one chart from the metric
 - [x] M1-06 Model adapter (Ollama/Qwen) + `query_metric` tool wrapping MetricFlow
 - [x] M1-07 Minimal agent loop answering one question with provenance
-- [ ] M1-08 Eval harness skeleton: one E1 case, deterministic scorer, usage/cost log, cache, budget cap
+- [x] M1-08 Eval harness skeleton: one E1 case, deterministic scorer, usage/cost log, cache, budget cap
 - [ ] M1-09 CI runs the skeleton on the fixture (no paid model calls)
 
 ## M2 — Data layer
