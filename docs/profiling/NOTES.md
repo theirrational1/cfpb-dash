@@ -48,3 +48,9 @@ Hand-written observations from the generated reports in this folder. Snapshot: b
 - **The overall decline in 2024–2026 is mostly credit reporting.** Its coverage falls from about 34% (2023) to 11% (2025-Q4) and 0.1% (2026). Other products hold about 40–60% through 2026-Q2.
 - **For credit cards (current label), monthly coverage is 38–53% from 2025-09 to 2026-06**, with one dip (2026-02: 26.8%), then 22.4% in 2026-07 and **0% from 2026-08**. That's a hard publication cut, not a gradual lag.
 - The PRD's "Mar 2026: 3.5%" is the all-products figure. Per product, the cutoff differs a lot.
+
+## M0-16 Archive vs bulk ([06_archive_vs_bulk.md](06_archive_vs_bulk.md))
+
+- **The archive covers complaints received up to 2026-08-31** (sent up to 2026-09-11; files built 2026-09-13), not Aug 14 as the PRD states.
+- **The ID overlap is near-total through 2025** (single-digit stragglers). In 2026: 4.81M in both, **37,912 archive-only** (complaints since removed from the public database) and 1.33M bulk-only (received after the archive cut).
+- **Structured fields agree almost perfectly through 2025.** In 2026, `Company response to consumer` differs on 9.1% and `Company public response` on 7.7% of shared IDs, because open complaints have since closed. `Company` differs on 0.01–0.10% in every year (name changes or reassignment). This supports "bulk owns structured fields".

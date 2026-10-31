@@ -146,3 +146,26 @@ def test_coverage_product_quarter_hand_computed(make_interim):
         ("2024-Q1", 50.0),
         ("2024-Q2", 100.0),
     ]
+
+
+def test_archive_vs_bulk_hand_computed(make_interim):
+    from profiling import archive_vs_bulk
+
+    bulk = [_bulk("1", "2024-01-01"), _bulk("2", "2024-01-01"), _bulk("3", "2024-01-01")]
+    archive = [
+        _narr("2", "2024-01-01", "t"),
+        _narr("3", "2024-01-01", "t", company="Acme Renamed"),
+        _narr("4", "2024-01-01", "t"),
+    ]
+    con = connect(make_interim(bulk, archive))
+    assert con.execute(archive_vs_bulk.overlap_sql()).fetchall() == [("2024", 2, 1, 1)]
+    mism = {f: (n, s) for _, s, f, n in con.execute(archive_vs_bulk.mismatch_sql()).fetchall()}
+    assert mism["Company"] == (1, 2)
+    assert mism["Product"] == (0, 2)
+    # report helpers render without error
+    assert (
+        "Company"
+        in dict(archive_vs_bulk.sections(con))[
+            "Field mismatch % on shared ids, by year received (bulk)"
+        ]
+    )

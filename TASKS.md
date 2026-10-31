@@ -33,7 +33,7 @@ Small, specific tasks to implement `PRD.md`. TDD for every feature. One mileston
 - [ ] M0-13 Draft minimum-volume threshold (versioned parameter)
 - [ ] M0-14 First draft of `docs/decisions/nulls.md` from profiling
 - [ ] M0-15 Narrative coverage by month (share of complaints with a narrative) → set the reliable cutoff month; record in PRD
-- [ ] M0-16 Archive vs bulk: overlap by `complaint_id`, records only in one, structured-field mismatches (expected for recent complaints)
+- [x] M0-16 Archive vs bulk: overlap by `complaint_id`, records only in one, structured-field mismatches (expected for recent complaints)
 
 ## M1 — Walking skeleton (thin vertical slice)
 
