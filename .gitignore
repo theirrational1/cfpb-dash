@@ -25,3 +25,8 @@ local_llm/
 
 # Local-only docs
 PRD.md
+
+# dbt
+dbt/target/
+dbt/logs/
+dbt/.user.yml

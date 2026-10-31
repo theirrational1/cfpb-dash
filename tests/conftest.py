@@ -82,3 +82,15 @@ FIXTURE_CSV = Path(__file__).parent / "fixtures" / "complaints_sample.csv"
 def fixture_csv() -> Path:
     """~1K real credit card complaints (3 issuers, 2025-01..2026-06), raw bulk header."""
     return FIXTURE_CSV
+
+
+@pytest.fixture(scope="session")
+def warehouse(tmp_path_factory, fixture_csv):
+    """Fixture CSV -> raw Parquet -> `dbt build`, once per test session."""
+    from core.warehouse import Warehouse, run_cli
+    from ingestion.bulk import ingest
+
+    wh = Warehouse(tmp_path_factory.mktemp("warehouse"))
+    ingest(fixture_csv, wh.raw_parquet, snapshot_date="2026-10-31", work_dir=wh.root / "work")
+    run_cli("dbt", ["build"], wh)
+    return wh

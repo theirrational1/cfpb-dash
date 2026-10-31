@@ -1,0 +1,8 @@
+models:
+  - name: stg_complaints
+    description: One row per complaint, typed and snake_cased.
+    columns:
+      - name: complaint_id
+        data_tests: [unique, not_null]
+      - name: date_received
+        data_tests: [not_null]

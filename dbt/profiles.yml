@@ -1,0 +1,9 @@
+# Paths come from the environment so dbt, MetricFlow and Python agree on one warehouse.
+# CLI: uv run --env-file dbt.env dbt build   (from the repo root)
+cfpb:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: "{{ env_var('CFPB_DUCKDB_PATH') }}"
+      threads: 4

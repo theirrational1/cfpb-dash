@@ -1,0 +1,11 @@
+name: cfpb
+version: "0.1.0"
+profile: cfpb
+model-paths: ["models"]
+
+models:
+  cfpb:
+    staging:
+      +materialized: view
+    marts:
+      +materialized: table

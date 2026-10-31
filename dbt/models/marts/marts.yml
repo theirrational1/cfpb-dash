@@ -1,0 +1,13 @@
+models:
+  - name: fct_complaints
+    description: Complaint fact. Grain is one complaint.
+    columns:
+      - name: complaint_id
+        data_tests: [unique, not_null]
+  - name: metricflow_time_spine
+    description: Daily time spine required by MetricFlow.
+    time_spine:
+      standard_granularity_column: date_day
+    columns:
+      - name: date_day
+        granularity: day

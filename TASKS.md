@@ -41,7 +41,7 @@ Small, specific tasks to implement `PRD.md`. TDD for every feature. One mileston
 
 - [x] M1-01 Fixture dataset (~1K rows, one product) in `tests/fixtures/` + `conftest.py` fixture
 - [x] M1-02 Minimal ingestion: fixture/bulk slice → raw parquet
-- [ ] M1-03 Minimal dbt: one staging model + one fact model + 2 tests
+- [x] M1-03 Minimal dbt: one staging model + one fact model + 2 tests
 - [ ] M1-04 One MetricFlow metric (`complaint_count` by month) + test vs hand-written SQL
 - [ ] M1-05 Streamlit page: company picker + one chart from the metric
 - [ ] M1-06 Model adapter (Ollama/Qwen) + `query_metric` tool wrapping MetricFlow

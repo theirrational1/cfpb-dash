@@ -1,0 +1,7 @@
+sources:
+  - name: raw
+    description: Raw bulk Parquet written by ingestion.bulk (all columns text, raw CFPB names).
+    tables:
+      - name: complaints
+        meta:
+          external_location: "read_parquet('{{ env_var('CFPB_RAW_PARQUET') }}')"
