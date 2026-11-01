@@ -122,3 +122,27 @@ metrics:
       likely a timezone effect) is kept as recorded (nulls.md).
     type: simple
     type_params: {measure: forwarding_lag_median}
+
+  - name: complaint_growth_mom
+    label: Complaint growth, month over month
+    description: >-
+      (complaints this month - complaints the month before) / complaints the month before.
+      Null when the month before had none. Query grouped by metric_time__month.
+    type: derived
+    type_params:
+      expr: (current_month - previous_month) / nullif(previous_month, 0)
+      metrics:
+        - {name: complaint_count, alias: current_month}
+        - {name: complaint_count, alias: previous_month, offset_window: 1 month}
+  - name: complaint_growth_yoy
+    label: Complaint growth, year over year
+    description: >-
+      (complaints this period - the same period a year earlier) / the same period a year
+      earlier; removes seasonality. Null when that period had none. Group by month, quarter
+      or year.
+    type: derived
+    type_params:
+      expr: (current_period - year_earlier) / nullif(year_earlier, 0)
+      metrics:
+        - {name: complaint_count, alias: current_period}
+        - {name: complaint_count, alias: year_earlier, offset_window: 1 year}

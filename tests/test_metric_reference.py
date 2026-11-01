@@ -76,3 +76,40 @@ def test_metric_matches_reference_sql(wh, metric, grouping):
     assert set(got) == set(expected), f"{metric}/{grouping}: different groups"
     bad = {k: (got[k], expected[k]) for k in expected if not _same(got[k], expected[k])}
     assert not bad, f"{metric}/{grouping}: {list(bad.items())[:5]}"
+
+
+GROWTH = {"complaint_growth_mom": 1, "complaint_growth_yoy": 12}  # offset in months
+
+
+@pytest.mark.parametrize(("dims", "sql_dim"), [([], None), (["complaint__product_family"],
+                                                            "product_family")])  # fmt: skip
+@pytest.mark.parametrize("metric", sorted(GROWTH))
+def test_growth_matches_reference_sql(wh, metric, dims, sql_dim):
+    """Monthly counts are zero-filled over the data's months; growth is null after a 0."""
+    governed = query_metric([metric], group_by=[*dims, "metric_time__month"], warehouse=wh)
+    got = {_key(r, [*dims, "metric_time__month"]): r[metric] for r in governed.rows}
+
+    g = f"{sql_dim}, " if sql_dim else ""
+    part = f"PARTITION BY {sql_dim} " if sql_dim else ""
+    con = duckdb.connect(str(wh.duckdb_path), read_only=True)
+    rows = con.execute(f"""
+        WITH months AS (
+            SELECT DISTINCT date_trunc('month', date_day) AS m FROM metricflow_time_spine),
+        groups AS (SELECT DISTINCT {sql_dim or "1"} AS g FROM fct_complaints),
+        counts AS (
+            SELECT {g}date_trunc('month', date_received) AS m, count(*) AS n
+            FROM fct_complaints GROUP BY ALL),
+        filled AS (
+            SELECT {"groups.g AS " + sql_dim + ", " if sql_dim else ""}months.m,
+                   coalesce(counts.n, 0) AS n
+            FROM months CROSS JOIN groups
+            LEFT JOIN counts ON counts.m = months.m
+                {"AND counts." + sql_dim + " = groups.g" if sql_dim else ""})
+        SELECT {g}strftime(m, '%Y-%m'),
+               (n - lag(n, {GROWTH[metric]}) OVER ({part}ORDER BY m))
+                 / nullif(lag(n, {GROWTH[metric]}) OVER ({part}ORDER BY m), 0)
+        FROM filled""").fetchall()
+    expected = {tuple(r[:-1]): r[-1] for r in rows}
+    assert got, metric
+    bad = {k: (v, expected.get(k)) for k, v in got.items() if not _same(v, expected.get(k))}
+    assert not bad, f"{metric}: {list(bad.items())[:5]}"

@@ -3,7 +3,8 @@
 Public tool (AGENTS.md: ask before changing it). Arguments that MetricFlow would silently
 reinterpret are refused with ToolArgumentError rather than answered with a wrong number:
 time filters (use time_range), partial or inverted dates, ranges not aligned to a grouped time
-grain (MetricFlow widens them to the grain), bare `metric_time`, filter values the data
+grain (MetricFlow widens them to the grain), bare `metric_time`, period-over-period metrics
+without a time grain that tiles their offset, filter values the data
 does not contain, and ranges that reach a period with no data (both would return a 0 that
 looks like a real count). Provenance carries the data's date range for coverage caveats.
 """
@@ -127,6 +128,12 @@ def _validate(
             raise ToolArgumentError(f"unknown group_by {g!r}; available: {available}")
     if len(grains) > 1:
         raise ToolArgumentError(f"group by at most one time grain, got {grains}")
+    for m in metrics:
+        allowed = catalog.offset_grains.get(m)
+        if allowed is not None and not (grains and grains[0] in allowed):
+            raise ToolArgumentError(
+                f"{m} compares periods: group by one of {sorted(allowed)} (metric_time)"
+            )
     for dim, value in filters.items():
         if dim.startswith("metric_time"):
             raise ToolArgumentError(f"filter {dim!r}: constrain time with time_range, not filters")

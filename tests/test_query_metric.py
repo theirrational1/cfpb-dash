@@ -179,3 +179,19 @@ def test_partly_covered_edge_period_is_allowed_and_coverage_is_in_provenance(war
         _sql_count(warehouse, "2025-01-01", "2025-01-31")
     ]
     assert result.provenance.data_range == ("2025-01-02", "2026-06-30")
+
+
+@pytest.mark.parametrize(
+    ("metric", "group_by", "message"),
+    [
+        ("complaint_growth_mom", [], "metric_time"),
+        ("complaint_growth_mom", ["complaint__company"], "metric_time"),
+        ("complaint_growth_mom", ["metric_time__quarter"], "month"),
+        ("complaint_growth_mom", ["metric_time__week"], "month"),
+        ("complaint_growth_yoy", ["metric_time__week"], "year"),
+    ],
+)
+def test_period_over_period_metrics_need_a_compatible_time_grain(warehouse, metric, group_by,
+                                                                 message):  # fmt: skip
+    with pytest.raises(ToolArgumentError, match=message):
+        query_metric([metric], group_by=group_by, warehouse=warehouse)
