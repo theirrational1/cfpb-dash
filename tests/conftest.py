@@ -76,12 +76,20 @@ def make_interim(tmp_path: Path):
 
 
 FIXTURE_CSV = Path(__file__).parent / "fixtures" / "complaints_sample.csv"
+ERAS_CSV = Path(__file__).parent / "fixtures" / "complaints_eras.csv"
 
 
 @pytest.fixture(scope="session")
 def fixture_csv() -> Path:
     """~1K real credit card complaints (3 issuers, 2025-01..2026-06), raw bulk header."""
     return FIXTURE_CSV
+
+
+@pytest.fixture(scope="session")
+def eras_csv() -> Path:
+    """~480 real complaints: every product label x year, every credit card label, and every
+    null / odd-value pattern in docs/decisions/nulls.md (2011-12..2026-10)."""
+    return ERAS_CSV
 
 
 def build_warehouse(root: Path, csv_path: Path, snapshot_date: str, project_dir: Path):
@@ -113,3 +121,9 @@ def warehouse(tmp_path_factory, fixture_csv, dbt_project):
     return build_warehouse(
         tmp_path_factory.mktemp("warehouse"), fixture_csv, "2026-10-31", dbt_project
     )
+
+
+@pytest.fixture(scope="session")
+def eras_warehouse(tmp_path_factory, eras_csv, dbt_project):
+    """The eras fixture built like `warehouse`: for mapping and null-handling tests."""
+    return build_warehouse(tmp_path_factory.mktemp("eras"), eras_csv, "2026-10-31", dbt_project)
