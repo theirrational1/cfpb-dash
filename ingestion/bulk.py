@@ -12,10 +12,12 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+import duckdb
+
 from core.log import configure_logging
 from core.warehouse import REPO_ROOT
 from ingestion.manifest import load_manifest, sha256_file
-from ingestion.raw_csv import BULK_COLUMNS, csv_to_parquet, extract_single_member
+from ingestion.raw_csv import BULK_COLUMNS, csv_to_parquet, extract_single_member, sql_str
 
 logger = logging.getLogger(__name__)
 
@@ -32,17 +34,37 @@ def _manifest_date(source: Path, manifest_path: Path) -> str | None:
     return None
 
 
+def _already_ingested(source: Path, out: Path, snapshot_date: str) -> dict[str, Any] | None:
+    snapshot = out.parent / "snapshot.json"
+    if not (snapshot.is_file() and out.is_file()):
+        return None
+    info = json.loads(snapshot.read_text())
+    if (info["source_sha256"], info["snapshot_date"]) != (sha256_file(source), snapshot_date):
+        return None
+    row = duckdb.connect().execute(f"SELECT count(*) FROM read_parquet({sql_str(out)})").fetchone()
+    return info if row is not None and row[0] == info["rows"] else None
+
+
 def ingest(
     source: Path,
     out: Path,
     snapshot_date: str | None,
     work_dir: Path,
     manifest_path: Path = RAW_MANIFEST,
+    force: bool = False,
 ) -> dict[str, Any]:
-    """Convert `source` to `out` (replacing it) and write out.parent/snapshot.json."""
+    """Convert `source` to `out` (replacing it) and write out.parent/snapshot.json.
+
+    Idempotent: if snapshot.json already records this source (sha256) and snapshot date and
+    `out` holds that many rows, nothing is rewritten (unless `force`)."""
     snapshot_date = snapshot_date or _manifest_date(source, manifest_path)
     if snapshot_date is None:
         raise ValueError(f"{source} is not in {manifest_path}; pass snapshot_date explicitly")
+    existing = _already_ingested(source, out, snapshot_date)
+    if existing is not None and not force:
+        logger.info("%s already ingested into %s (snapshot %s); skipping", source, out,
+                    snapshot_date)  # fmt: skip
+        return existing
 
     out.parent.mkdir(parents=True, exist_ok=True)
     tmp = out.with_name(out.name + ".tmp")
@@ -77,8 +99,10 @@ def main() -> None:
     parser.add_argument("--source", type=Path, required=True)
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
     parser.add_argument("--snapshot-date", help="required if the source is not in MANIFEST.json")
+    parser.add_argument("--force", action="store_true", help="rebuild even if already ingested")
     args = parser.parse_args()
-    ingest(args.source, args.out, args.snapshot_date, work_dir=args.out.parent / "_work")
+    ingest(args.source, args.out, args.snapshot_date, work_dir=args.out.parent / "_work",
+           force=args.force)  # fmt: skip
 
 
 if __name__ == "__main__":
