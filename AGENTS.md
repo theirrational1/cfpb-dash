@@ -35,7 +35,8 @@ uv run --env-file dbt.env --env-file mf.env mf query --metrics <m> --group-by <d
 uv run pytest
 uv run ruff check . && uv run ruff format --check .
 uv run ty check
-uv run python -m evals.run --suite e1 --split dev --model qwen
+uv run python -m ingestion.snapshot       # freeze data/snapshots/<date>/ (evals refuse a live warehouse)
+uv run python -m evals.run --suite e1 --split dev --model qwen   # newest frozen snapshot
 uv run streamlit run app/main.py
 ```
 

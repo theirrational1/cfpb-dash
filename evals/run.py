@@ -8,9 +8,10 @@ from pathlib import Path
 
 from agent.adapters.ollama import DEFAULT_MODEL, OllamaAdapter
 from core.log import configure_logging
-from core.warehouse import REPO_ROOT, Warehouse
+from core.warehouse import REPO_ROOT
 from evals.harness.cases import load_cases
 from evals.harness.runner import run_suite
+from ingestion.snapshot import resolve_eval_warehouse
 
 DATASETS = REPO_ROOT / "evals" / "datasets"
 MODELS = {"qwen": DEFAULT_MODEL}
@@ -23,7 +24,9 @@ def main() -> None:
     parser.add_argument("--split", required=True, choices=["dev", "heldout"])
     parser.add_argument("--model", required=True, choices=sorted(MODELS))
     parser.add_argument("--budget-usd", type=float, default=1.0)
-    parser.add_argument("--warehouse", type=Path, help="snapshot warehouse root")
+    parser.add_argument(
+        "--warehouse", type=Path, help="frozen snapshot dir (default: newest in data/snapshots)"
+    )
     parser.add_argument(
         "--no-cache", action="store_true", help="always call the model (scored runs)"
     )
@@ -32,7 +35,7 @@ def main() -> None:
     summary = run_suite(
         load_cases(DATASETS / args.split / f"{args.suite}.toml"),
         OllamaAdapter(MODELS[args.model]),
-        Warehouse(args.warehouse) if args.warehouse else Warehouse(),
+        resolve_eval_warehouse(args.warehouse),  # frozen snapshots only (AGENTS.md)
         suite=args.suite,
         split=args.split,
         results_dir=REPO_ROOT / "evals" / "results",

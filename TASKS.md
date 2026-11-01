@@ -68,7 +68,7 @@ Small, specific tasks to implement `PRD.md`. TDD for every feature. One mileston
 - [x] M2-09 Complaint fact; tests: unique id, not-null, accepted values, row count vs raw
 
 **Then**
-- [ ] M2-10 Snapshot job: freeze a dated DuckDB copy for evals
+- [x] M2-10 Snapshot job: freeze a dated DuckDB copy for evals
 
 ## M3 — Metrics
 
