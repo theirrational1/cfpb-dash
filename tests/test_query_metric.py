@@ -113,3 +113,46 @@ def test_aligned_coarse_range_is_allowed_and_correct(warehouse):
 def test_unknown_metric_is_a_tool_argument_error(warehouse):
     with pytest.raises(ToolArgumentError, match="no_such_metric"):
         query_metric(["no_such_metric"], warehouse=warehouse)
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        # review 2 #2: model-shaped mistakes must be ToolArgumentError, not crash the eval run
+        {"metrics": ["complaint_count", "complaint_count"]},
+        {"metrics": "complaint_count"},
+        {"metrics": [["complaint_count"]]},
+        {"metrics": ["complaint_count"], "group_by": [1]},
+        {"metrics": ["complaint_count"], "group_by": "metric_time__month"},
+        {"metrics": ["complaint_count"], "filters": "abc"},
+        {"metrics": ["complaint_count"], "filters": {"complaint__company": 3}},
+        {"metrics": ["complaint_count"], "time_range": ["2026-03-01"]},
+        {"metrics": ["complaint_count"], "time_range": [20260301, 20260331]},
+        {
+            "metrics": ["complaint_count"],
+            "group_by": ["metric_time__month"],
+            "time_range": ["2026-01-01", "9999-12-31"],
+        },
+    ],
+)
+def test_malformed_arguments_are_tool_argument_errors(warehouse, kwargs):
+    with pytest.raises(ToolArgumentError):
+        query_metric(warehouse=warehouse, **kwargs)
+
+
+def test_empty_result_is_zero_rows_not_a_crash(warehouse):
+    con = duckdb.connect(str(warehouse.duckdb_path), read_only=True)
+    row = con.execute(
+        """SELECT min(date_day) FROM metricflow_time_spine
+           WHERE date_day NOT IN (SELECT date_received FROM fct_complaints)"""
+    ).fetchone()
+    assert row is not None
+    day = str(row[0])
+    result = query_metric(
+        ["complaint_count"],
+        group_by=["complaint__company"],
+        time_range=(day, day),
+        warehouse=warehouse,
+    )
+    assert result.rows == []
+    assert result.provenance.columns == ["complaint__company", "complaint_count"]

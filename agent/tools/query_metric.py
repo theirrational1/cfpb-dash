@@ -64,14 +64,39 @@ def _period_start(d: date, grain: str) -> date:
 
 
 def _period_end(d: date, grain: str) -> date:
-    if grain == "week":
-        return _period_start(d, grain) + timedelta(days=6)
-    if grain in ("month", "quarter", "year"):
-        months = {"month": 1, "quarter": 3, "year": 12}[grain]
-        start = _period_start(d, grain)
-        y, m = divmod(start.month - 1 + months, 12)
-        return start.replace(year=start.year + y, month=m + 1) - timedelta(days=1)
+    try:
+        if grain == "week":
+            return _period_start(d, grain) + timedelta(days=6)
+        if grain in ("month", "quarter", "year"):
+            months = {"month": 1, "quarter": 3, "year": 12}[grain]
+            start = _period_start(d, grain)
+            y, m = divmod(start.month - 1 + months, 12)
+            return start.replace(year=start.year + y, month=m + 1) - timedelta(days=1)
+    except (OverflowError, ValueError) as e:  # e.g. 9999-12-31: the period ends past year 9999
+        raise ToolArgumentError(f"date {d} is out of range for the {grain} grain: {e}") from e
     return d
+
+
+def _is_str_list(value: object) -> bool:
+    return isinstance(value, list | tuple) and all(isinstance(v, str) for v in value)
+
+
+def _check_types(metrics: object, group_by: object, filters: object, time_range: object) -> None:
+    """Tool arguments arrive as model-written JSON: wrong shapes are the model's mistake."""
+    if not _is_str_list(metrics) or not metrics:
+        raise ToolArgumentError(f"metrics must be a non-empty list of names, got {metrics!r}")
+    assert isinstance(metrics, list | tuple)
+    if len(set(metrics)) != len(metrics):
+        raise ToolArgumentError(f"metrics has duplicates: {list(metrics)}")
+    if group_by is not None and not _is_str_list(group_by):
+        raise ToolArgumentError(f"group_by must be a list of names, got {group_by!r}")
+    if filters is not None and not isinstance(filters, dict):
+        raise ToolArgumentError(f"filters must be an object {{dimension: value}}, got {filters!r}")
+    if time_range is not None and (
+        not isinstance(time_range, list | tuple) or len(time_range) != 2
+        or not all(t is None or isinstance(t, str) for t in time_range)
+    ):  # fmt: skip
+        raise ToolArgumentError(f"time_range must be [start, end] strings, got {time_range!r}")
 
 
 def _validate(
@@ -182,6 +207,7 @@ def query_metric(
     """Query governed metrics via `mf query`. Filters are equality on dimensions (AND-ed);
     time_range is [start, end], both inclusive, as YYYY-MM-DD."""
     warehouse = warehouse or Warehouse()
+    _check_types(metrics, group_by, filters, time_range)
     group_by = list(group_by or [])
     filters = dict(filters or {})
     start, end = time_range or (None, None)
@@ -199,11 +225,16 @@ def query_metric(
 
     with tempfile.TemporaryDirectory() as tmp:
         out = Path(tmp) / "result.csv"
-        run_cli("mf", [*args, "--csv", str(out)], warehouse)
-        with out.open(newline="") as f:
-            reader = csv.DictReader(f)
-            columns = list(reader.fieldnames or [])
-            raw = list(reader)
+        stdout = run_cli("mf", [*args, "--csv", str(out)], warehouse)
+        if out.exists():
+            with out.open(newline="") as f:
+                reader = csv.DictReader(f)
+                columns = list(reader.fieldnames or [])
+                raw = list(reader)
+        elif "empty result set" in stdout:  # mf writes no CSV for zero rows
+            columns, raw = [*group_by, *metrics], []
+        else:
+            raise RuntimeError(f"mf query wrote no CSV and reported no empty result:\n{stdout}")
 
     rows: list[dict[str, str | int | float | None]] = [
         {k: _number(v) if k in metrics else v for k, v in r.items()} for r in raw

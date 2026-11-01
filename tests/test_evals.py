@@ -207,3 +207,37 @@ def test_infrastructure_failure_is_not_scored_as_a_model_error(
             ops_dir=tmp_path / "o",
             budget_usd=1.0,
         )
+
+
+@pytest.mark.parametrize(
+    "args",
+    [
+        {"metrics": ["complaint_count", "complaint_count"]},
+        {"metrics": ["complaint_count"], "group_by": [1]},
+        {"metrics": ["complaint_count"], "filters": "abc"},
+        {"metrics": [["complaint_count"]]},
+        {
+            "metrics": ["complaint_count"],
+            "group_by": ["metric_time__month"],
+            "time_range": ["2026-01-01", "9999-12-31"],
+        },
+    ],
+)
+def test_model_argument_mistakes_are_scored_as_error_and_the_run_continues(
+    warehouse, cases_file, tmp_path, args
+):
+    """Review 2 #2: these used to raise non-AgentModelError exceptions and stop the run."""
+    bad = ChatResult(None, [ToolCall.of("c", "query_metric", args)], Usage(1, 1), "fake")
+    summary = run_suite(
+        load_cases(cases_file)[1:3],
+        FakeAdapter([bad, _final(7)]),
+        warehouse,
+        suite="e1",
+        split="dev",
+        results_dir=tmp_path / "r",
+        ops_dir=tmp_path / "o",
+        budget_usd=1.0,
+    )
+    first, second = summary["cases"]
+    assert first["status"] == "error" and first["error"].startswith("ToolArgumentError")
+    assert second["status"] == "error"  # case 2 still ran (answered without the tool)

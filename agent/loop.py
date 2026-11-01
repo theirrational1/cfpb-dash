@@ -114,17 +114,11 @@ def _call_tool(call: ToolCall, warehouse: Warehouse) -> MetricResult:
     unexpected = set(args) - TOOL_ARGS
     if unexpected:
         raise ToolArgumentError(f"query_metric got unexpected arguments {sorted(unexpected)}")
-    time_range = args.get("time_range")
-    if time_range is not None and (
-        not isinstance(time_range, list) or len(time_range) != 2
-        or not all(isinstance(t, str) for t in time_range)
-    ):  # fmt: skip
-        raise ToolArgumentError(f"time_range must be [start, end] strings, got {time_range!r}")
-    return query_metric(
+    return query_metric(  # query_metric type-checks every argument (ToolArgumentError)
         args["metrics"],
         group_by=args.get("group_by"),
         filters=args.get("filters"),
-        time_range=(time_range[0], time_range[1]) if time_range else None,
+        time_range=args.get("time_range"),
         warehouse=warehouse,
     )
 
