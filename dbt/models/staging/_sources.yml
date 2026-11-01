@@ -1,6 +1,8 @@
 sources:
   - name: raw
-    description: Raw bulk Parquet written by ingestion.bulk (all columns text, raw CFPB names).
+    description: >
+      Raw Parquet written by ingestion (all columns text, raw CFPB names): the bulk file
+      (ingestion.bulk) and the API day pulls (ingestion.incremental).
     tables:
       - name: complaints
         meta:
@@ -18,3 +20,11 @@ sources:
               - accepted_values:
                   arguments:
                     values: ["Older American", "Servicemember", "Older American, Servicemember"]
+      - name: api_complaints
+        description: API day exports, normalized to the bulk representation, plus pulled_at.
+        meta:
+          external_location: "read_parquet('{{ env_var('CFPB_API_PARQUET') }}')"
+      - name: api_pull_days
+        description: One row per (pull, received day) the pull covered, including empty days.
+        meta:
+          external_location: "read_parquet('{{ env_var('CFPB_API_PULL_DAYS') }}')"

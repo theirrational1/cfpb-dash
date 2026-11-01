@@ -1,6 +1,8 @@
 -- CLEANER Limit + Edit + types. zip_code and source_file dropped (docs/decisions/nulls.md).
 -- CLEANER Null: each nullable column follows docs/decisions/nulls.md (tests in the yml).
 -- The model contract (stg_complaints.yml) pins the column list and types.
+-- Upsert (M2-03): the latest loaded version of each complaint wins; removed ones are left out
+-- (counted in stg_removed_complaints).
 select
     cast("Complaint ID" as bigint) as complaint_id,
     cast("Date received" as date) as date_received,
@@ -25,4 +27,8 @@ select
     end as company_public_response,
     cast("Date received" as date) >= date '2015-01-01' as public_response_available,
     "Timely response?" = 'Yes' as timely
-from {{ source('raw', 'complaints') }}
+from {{ ref('stg_complaint_versions') }}
+where cast("Complaint ID" as bigint) not in (
+    select complaint_id from {{ ref('stg_removed_complaints') }}
+)
+qualify row_number() over (partition by "Complaint ID" order by loaded_at desc) = 1

@@ -32,6 +32,14 @@ class Warehouse:
         return self.root / "raw" / "complaints.parquet"
 
     @property
+    def api_parquet(self) -> Path:
+        return self.raw_parquet.parent / "api_complaints.parquet"
+
+    @property
+    def api_pull_days(self) -> Path:
+        return self.raw_parquet.parent / "api_pull_days.parquet"
+
+    @property
     def semantic_manifest(self) -> Path:
         return self.project_dir / "target" / "semantic_manifest.json"
 
@@ -49,6 +57,8 @@ class Warehouse:
             "CFPB_DUCKDB_PATH": str(self.duckdb_path),
             "CFPB_RAW_PARQUET": str(self.raw_parquet),
             "CFPB_SNAPSHOT_JSON": str(self.snapshot_json),
+            "CFPB_API_PARQUET": str(self.api_parquet),
+            "CFPB_API_PULL_DAYS": str(self.api_pull_days),
         }
 
     @classmethod

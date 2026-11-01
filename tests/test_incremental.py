@@ -118,3 +118,50 @@ def test_transient_errors_are_retried_and_others_raise(raw_dir):
     with pytest.raises(HTTPError):
         pull(DAYS[:1], raw_dir, raw_dir / "MANIFEST.json", fetch=FakeApi(fail_first=[404]),
              now=datetime(2026, 11, 2, tzinfo=UTC), sleep=lambda s: None)  # fmt: skip
+
+
+def _con():
+    import duckdb
+
+    return duckdb.connect()
+
+
+def test_build_normalizes_pulls_into_parquet(raw_dir, tmp_path):
+    from ingestion.incremental import build
+
+    pull(DAYS, raw_dir, raw_dir / "MANIFEST.json", fetch=FakeApi(), now=NOW, sleep=lambda s: None)
+    out = tmp_path / "wh" / "api_complaints.parquet"
+    days_out = tmp_path / "wh" / "api_pull_days.parquet"
+    info = build(raw_dir / "api", out, days_out)
+
+    assert info == {"pulls": 1, "rows": 30, "latest_pulled_at": "2026-11-01T06:00:00+00:00"}
+    con = _con()
+    row = con.execute(
+        f"""SELECT count(*), min("Date received"), max("Date sent to company"),
+                   count(*) FILTER (WHERE "ZIP code" IS NULL),
+                   count(*) FILTER (WHERE "Tags" = 'None'), min(pulled_at)
+            FROM read_parquet('{out}')"""
+    ).fetchone()
+    assert row is not None
+    assert row[:5] == (30, "2026-10-20", row[2], 30, 0)
+    assert len(row[2]) == 10  # timestamps cut to YYYY-MM-DD, as in bulk
+    pulled = con.execute(f"SELECT day, rows FROM read_parquet('{days_out}') ORDER BY 1").fetchall()
+    assert pulled == [("2026-10-20", 13), ("2026-10-21", 10), ("2026-10-22", 7)]
+
+
+def test_build_with_no_pulls_writes_empty_tables(tmp_path):
+    from ingestion.incremental import build
+
+    out, days_out = tmp_path / "a.parquet", tmp_path / "d.parquet"
+    assert build(tmp_path / "missing", out, days_out)["rows"] == 0
+    assert _con().execute(f"SELECT count(*) FROM read_parquet('{out}')").fetchone() == (0,)
+    assert _con().execute(f"SELECT count(*) FROM read_parquet('{days_out}')").fetchone() == (0,)
+
+
+def test_build_skips_incomplete_pulls(raw_dir, tmp_path):
+    from ingestion.incremental import build
+
+    partial = raw_dir / "api" / "20261102T000000Z"
+    partial.mkdir(parents=True)
+    (partial / "2026-10-20.csv").write_text((API_FIXTURES / "citi_cc_2026-10-20.csv").read_text())
+    assert build(raw_dir / "api", tmp_path / "a.parquet", tmp_path / "d.parquet")["pulls"] == 0
