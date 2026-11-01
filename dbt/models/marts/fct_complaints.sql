@@ -11,6 +11,7 @@ select
     i.issue,
     i.credit_card_issue,
     i.company_key,
+    i.company_key || ' | ' || i.product_family as company_product_key,  -- peer groups
     d.company_name as company,
     i.state,
     i.submitted_via,

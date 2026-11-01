@@ -76,7 +76,7 @@ Small, specific tasks to implement `PRD.md`. TDD for every feature. One mileston
 
 - [x] M3-01 Remaining metrics from PRD §7 (confirm definitions against M0 profiling)
 - [x] M3-02 Reference SQL + tests comparing to `mf query`
-- [ ] M3-03 Peer groups: product-based, min threshold, complaint-volume tiers (labelled as such)
+- [x] M3-03 Peer groups: product-based, min threshold, complaint-volume tiers (labelled as such)
 - [ ] M3-04 Coverage source table (freshness, exclusions, narrative cutoff)
 
 ## M4 — Dashboard

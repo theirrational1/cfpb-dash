@@ -19,6 +19,12 @@ vars:
   company_response_null_cap: 25
   sub_product_stray_null_cap: 150  # 136 today: 99 checking/savings, 34 payday, 3 card
   negative_lag_cap: 7100  # 7,050 today, all exactly -1 day (nulls.md: kept as-is)
+  # Peer groups (PRD §8). Mirrors params/*.v1.yaml, the versioned source of truth; a pytest
+  # fails if they differ.
+  min_volume_threshold_version: 1
+  min_volume_threshold: 100
+  volume_tiers_version: 1
+  volume_tier_labels: [high, middle, low]
 
 flags:
   send_anonymous_usage_stats: false

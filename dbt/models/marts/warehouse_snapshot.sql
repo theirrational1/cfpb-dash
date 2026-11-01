@@ -2,13 +2,12 @@
 -- query_metric reads provenance from here, so labels always match the data queried.
 -- It refs the fact table and the spine so a failed build skips it and keeps the old stamp;
 -- read_snapshot_stamp then refuses to serve if staging or the fact moved without it.
--- snapshot_date: the bulk snapshot date, or the US Eastern date of the newest pull's data
--- (last_indexed) if later; never the clock time a pull happened to run (review 3 #3).
+-- snapshot_date: int_snapshot_date (bulk date, or the Eastern date of the newest pull's data;
+-- never the clock time a pull ran). Built last: it also depends on the peer groups.
 -- depends_on: {{ ref('metricflow_time_spine') }}
+-- depends_on: {{ ref('dim_company_product') }}
 select
-    cast(greatest(
-        cast(s.snapshot_date as date), coalesce(api.latest_as_of_date_et, date '0001-01-01')
-    ) as varchar) as snapshot_date,
+    cast((select snapshot_date from {{ ref('int_snapshot_date') }}) as varchar) as snapshot_date,
     cast(s.snapshot_date as varchar) as bulk_snapshot_date,
     cast(s.generated_at as varchar) as bulk_generated_at,
     cast(s.dropped_since_previous as bigint) as bulk_dropped_since_previous,

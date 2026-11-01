@@ -1,0 +1,10 @@
+# Complaint-volume tiers among eligible peers (PRD §8). Released version: never edit; create v2.
+# Decided in M3 planning (2026-11-01). Tiers rank complaint VOLUME, not company size: always
+# label them "complaint-volume tier".
+version: 1
+decided: 2026-11-01
+method: quantile tiers (ntile) of trailing-12-month complaint count, within product family
+basis: companies eligible under min_volume_threshold (the same trailing window)
+labels: [high, middle, low]   # ntile 1, 2, 3 by count descending
+ties: broken by company_key (alphabetical), so a tier boundary is deterministic
+label_text: complaint-volume tier

@@ -24,6 +24,13 @@ models:
               arguments:
                 to: ref('dim_company')
                 field: company_key
+      - name: company_product_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_company_product')
+                field: company_product_key
       - name: company
         data_tests: [not_null]
       - name: is_closed
@@ -38,6 +45,25 @@ models:
         data_tests: [not_null]
       - name: is_servicemember
         data_tests: [not_null]
+  - name: dim_company_product
+    description: >
+      Peer groups (PRD §8): one row per company and product family. peer_status = eligible
+      (>= min_volume_threshold complaints in the 12 full months before the snapshot month) or
+      below_threshold; eligible rows get a complaint-volume tier (never "size").
+    columns:
+      - name: company_product_key
+        data_tests: [unique, not_null]
+      - name: peer_status
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [eligible, below_threshold]
+      - name: volume_tier
+        description: Null when below threshold.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: "{{ var('volume_tier_labels') }}"
   - name: metricflow_time_spine
     description: Daily time spine required by MetricFlow.
     time_spine:
@@ -45,3 +71,50 @@ models:
     columns:
       - name: date_day
         granularity: day
+unit_tests:
+  - name: peer_groups_threshold_tertiles_and_ties
+    model: dim_company_product
+    description: Threshold 2 (overridden); 6 eligible -> 2 per tier; B/C tie broken by key.
+    overrides:
+      vars: {min_volume_threshold: 2}
+    given:
+      - input: ref('int_snapshot_date')
+        rows: [{snapshot_date: 2026-10-31}]
+      - input: ref('fct_complaints')
+        format: csv
+        rows: |
+          company_key,product_family,date_received
+          A,credit_card,2025-10-01
+          A,credit_card,2025-11-01
+          A,credit_card,2026-01-01
+          A,credit_card,2026-02-01
+          A,credit_card,2026-09-30
+          B,credit_card,2026-01-01
+          B,credit_card,2026-01-02
+          B,credit_card,2026-01-03
+          B,credit_card,2026-01-04
+          C,credit_card,2026-02-01
+          C,credit_card,2026-02-02
+          C,credit_card,2026-02-03
+          C,credit_card,2026-02-04
+          D,credit_card,2026-03-01
+          D,credit_card,2026-03-02
+          D,credit_card,2026-03-03
+          E,credit_card,2026-04-01
+          E,credit_card,2026-04-02
+          F,credit_card,2026-05-01
+          F,credit_card,2026-05-02
+          G,credit_card,2026-06-01
+          G,credit_card,2025-09-30
+          G,credit_card,2026-10-01
+          A,mortgage,2026-01-01
+    expect:
+      rows:
+        - {company_key: A, product_family: credit_card, complaints_trailing_12m: 5, peer_status: eligible, volume_tier: high, rank_in_family: 1, n_eligible_in_family: 6}
+        - {company_key: B, product_family: credit_card, complaints_trailing_12m: 4, peer_status: eligible, volume_tier: high, rank_in_family: 2, n_eligible_in_family: 6}
+        - {company_key: C, product_family: credit_card, complaints_trailing_12m: 4, peer_status: eligible, volume_tier: middle, rank_in_family: 3, n_eligible_in_family: 6}
+        - {company_key: D, product_family: credit_card, complaints_trailing_12m: 3, peer_status: eligible, volume_tier: middle, rank_in_family: 4, n_eligible_in_family: 6}
+        - {company_key: E, product_family: credit_card, complaints_trailing_12m: 2, peer_status: eligible, volume_tier: low, rank_in_family: 5, n_eligible_in_family: 6}
+        - {company_key: F, product_family: credit_card, complaints_trailing_12m: 2, peer_status: eligible, volume_tier: low, rank_in_family: 6, n_eligible_in_family: 6}
+        - {company_key: G, product_family: credit_card, complaints_trailing_12m: 1, peer_status: below_threshold, volume_tier: null, rank_in_family: null, n_eligible_in_family: 6}
+        - {company_key: A, product_family: mortgage, complaints_trailing_12m: 1, peer_status: below_threshold, volume_tier: null, rank_in_family: null, n_eligible_in_family: 0}

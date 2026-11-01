@@ -1,0 +1,17 @@
+# Peer groups as dimensions (M3-03): any complaint metric can be filtered or grouped by a
+# company's peer status and complaint-volume tier in its product family (as of the snapshot).
+semantic_models:
+  - name: company_products
+    description: One row per company and product family (dim_company_product).
+    model: ref('dim_company_product')
+    entities:
+      - name: company_product
+        type: primary
+        expr: company_product_key
+    dimensions:
+      - name: peer_status
+        type: categorical
+        description: eligible (>= the volume threshold, trailing 12 full months) or below_threshold.
+      - name: volume_tier
+        type: categorical
+        description: Complaint-volume tier (high / middle / low) among eligible peers; not company size.

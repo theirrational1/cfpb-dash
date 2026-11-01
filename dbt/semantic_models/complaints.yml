@@ -11,6 +11,9 @@ semantic_models:
       - name: complaint
         type: primary
         expr: complaint_id
+      - name: company_product
+        type: foreign
+        expr: company_product_key
     dimensions:
       - name: date_received
         type: time
