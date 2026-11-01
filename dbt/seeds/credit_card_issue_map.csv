@@ -1,0 +1,66 @@
+product,issue,canonical_issue,match,evidence
+Credit card,Problem with a purchase shown on your statement,Problem with a purchase shown on your statement,exact,
+Credit card,Incorrect information on your report,Incorrect information on your report,exact,
+Credit card,Getting a credit card,Getting a credit card,exact,
+Credit card,"Other features, terms, or problems","Other features, terms, or problems",exact,
+Credit card,Problem with a company's investigation into an existing problem,Problem with a company's investigation into an existing problem,exact,
+Credit card,Fees or interest,Fees or interest,exact,
+Credit card,Closing your account,Closing your account,exact,
+Credit card,Problem when making payments,Problem when making payments,exact,
+Credit card,"Advertising and marketing, including promotional offers","Advertising and marketing, including promotional offers",exact,
+Credit card,Trouble using your card,Trouble using your card,exact,
+Credit card,Struggling to pay your bill,Struggling to pay your bill,exact,
+Credit card,Improper use of your report,Improper use of your report,exact,
+Credit card,Credit monitoring or identity theft protection services,Credit monitoring or identity theft protection services,exact,
+Credit card,Problem with fraud alerts or security freezes,Problem with fraud alerts or security freezes,exact,
+Credit card,Unable to get your credit report or credit score,Unable to get your credit report or credit score,exact,
+Credit card or prepaid card,Problem with a purchase shown on your statement,Problem with a purchase shown on your statement,exact,
+Credit card or prepaid card,Incorrect information on your report,Incorrect information on your report,exact,
+Credit card or prepaid card,Getting a credit card,Getting a credit card,exact,
+Credit card or prepaid card,"Other features, terms, or problems","Other features, terms, or problems",exact,
+Credit card or prepaid card,Fees or interest,Fees or interest,exact,
+Credit card or prepaid card,Closing your account,Closing your account,exact,
+Credit card or prepaid card,Problem when making payments,Problem when making payments,exact,
+Credit card or prepaid card,"Advertising and marketing, including promotional offers","Advertising and marketing, including promotional offers",exact,
+Credit card or prepaid card,Trouble using your card,Trouble using your card,exact,
+Credit card or prepaid card,Struggling to pay your bill,Struggling to pay your bill,exact,
+Credit card or prepaid card,Improper use of your report,Improper use of your report,exact,
+Credit card or prepaid card,Credit monitoring or identity theft protection services,Credit monitoring or identity theft protection services,exact,
+Credit card or prepaid card,Problem with fraud alerts or security freezes,Problem with fraud alerts or security freezes,exact,
+Credit card or prepaid card,Unable to get your credit report or credit score,Unable to get your credit report or credit score,exact,
+Credit card or prepaid card,Problem with a credit reporting company's investigation into an existing problem,Problem with a company's investigation into an existing problem,renamed,"same issue, renamed in 2023"
+Credit card or prepaid card,Problem with credit report or credit score,Incorrect information on your report,judgment,"nearest; 16 rows, 2017-21"
+Credit card or prepaid card,"Managing, opening, or closing your mobile wallet account","Other features, terms, or problems",judgment,"Other problem; 3 rows, 2021"
+Credit card,Billing disputes,Problem with a purchase shown on your statement,close,Credit card company isn't resolving a dispute about a purchase on your statement
+Credit card,Other,"Other features, terms, or problems",close,Other problem
+Credit card,Identity theft / Fraud / Embezzlement,Fraud or identity theft (pre-2017 label),legacy,none: today split between Getting a credit card (card opened without consent) and Problem with a purchase (charged for something not purchased)
+Credit card,Closing/Cancelling account,Closing your account,close,Company closed your account / Can't close your account
+Credit card,APR or interest rate,Fees or interest,close,Charged too much interest / Unexpected increase in interest rate
+Credit card,Late fee,Fees or interest,close,Problem with fees
+Credit card,Customer service / Customer relations,"Other features, terms, or problems",close,Problem with customer service
+Credit card,Delinquent account,Struggling to pay your bill,close,Credit card company won't work with you while you're going through financial hardship
+Credit card,Credit determination,Getting a credit card,close,Application denied
+Credit card,Advertising and marketing,"Advertising and marketing, including promotional offers",close,Confusing or misleading advertising about the credit card
+Credit card,Rewards,"Other features, terms, or problems",close,Problem with rewards from credit card
+Credit card,Credit card protection / Debt protection,"Other features, terms, or problems",close,Add-on products and services
+Credit card,Transaction issue,Trouble using your card,close,Can't use card to make purchases
+Credit card,Billing statement,Problem when making payments,close,You never received your bill or did not know a payment was due
+Credit card,Payoff process,Problem when making payments,close,Problem during payment process
+Credit card,Other fee,Fees or interest,close,Problem with fees
+Credit card,Credit line increase/decrease,Trouble using your card,close,Credit card company won't increase or decrease your credit limit
+Credit card,Unsolicited issuance of credit card,Getting a credit card,close,Sent card you never applied for
+Credit card,Credit reporting,Incorrect information on your report,judgment,Account status incorrect / Account information incorrect (nearest; old label was any credit reporting problem)
+Credit card,Balance transfer,"Other features, terms, or problems",close,Problem with balance transfer
+Credit card,Collection practices,Struggling to pay your bill,judgment,none for collection; nearest is financial hardship
+Credit card,Collection debt dispute,Struggling to pay your bill,judgment,none for collection; nearest is financial hardship
+Credit card,Forbearance / Workout plans,Struggling to pay your bill,close,Problem lowering your monthly payments
+Credit card,Application processing delay,Getting a credit card,close,Delay in processing application
+Credit card,Privacy,"Other features, terms, or problems",close,Privacy issues
+Credit card,Bankruptcy,Struggling to pay your bill,close,Filed for bankruptcy
+Credit card,Arbitration,"Other features, terms, or problems",close,Credit card company forcing arbitration
+Credit card,Sale of account,Trouble using your card,close,Account sold or transferred to another company
+Credit card,Cash advance,"Other features, terms, or problems",close,Problem with cash advances
+Credit card,Balance transfer fee,Fees or interest,close,Problem with fees
+Credit card,Overlimit fee,Fees or interest,close,Problem with fees
+Credit card,Cash advance fee,Fees or interest,close,Problem with fees
+Credit card,Convenience checks,"Other features, terms, or problems",close,Problem with convenience check

@@ -1,0 +1,18 @@
+models:
+  - name: int_complaints
+    description: One row per complaint (staging + engineered columns).
+    columns:
+      - name: complaint_id
+        data_tests: [unique, not_null]
+      - name: product_family
+        description: Product family across label revisions (seed product_family_map).
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('product_families')
+                field: product_family
+      - name: credit_card_issue
+        description: >
+          Credit card rows only: the issue on the current (2023+) credit card issue list
+          (seed credit_card_issue_map). Null for other families and for the null-issue rows.

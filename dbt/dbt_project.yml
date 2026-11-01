@@ -8,6 +8,8 @@ models:
     staging:
       # tables, not views: a copied (frozen) warehouse must not read the original raw parquet
       +materialized: table
+    intermediate:
+      +materialized: table
     marts:
       +materialized: table
 
@@ -15,6 +17,7 @@ vars:
   # docs/decisions/nulls.md: rare "error" nulls are capped so growth fails the build
   issue_null_cap: 10
   company_response_null_cap: 25
+  sub_product_stray_null_cap: 150  # 136 today: 99 checking/savings, 34 payday, 3 card
 
 flags:
   send_anonymous_usage_stats: false

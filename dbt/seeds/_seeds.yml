@@ -20,3 +20,34 @@ seeds:
         data_tests: [unique, not_null]
       - name: canonical_public_response
         data_tests: [not_null]
+  - name: product_families
+    description: The 11 product families that every product label maps to.
+    columns:
+      - name: product_family
+        data_tests: [unique, not_null]
+  - name: product_family_map
+    description: >
+      (product label, sub_product) -> product family across the Apr 2017 and Aug 2023
+      revisions. sub_product '*' is the label's default; exact rows override it where CFPB
+      later moved a sub-product to another product (e.g. prepaid cards, credit repair).
+    columns:
+      - name: product_family
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('product_families')
+                field: product_family
+  - name: no_sub_product_eras
+    description: Product labels (and received-date eras) that had no sub-products (structural).
+  - name: credit_card_issue_map
+    description: >
+      Credit card issue labels from every era -> the current (2023+) list. Each non-exact row
+      maps to the current issue whose sub-issue now covers the topic (column evidence).
+      match: exact, renamed, close (a current sub-issue covers it), judgment (nearest fit),
+      legacy (no current home: its own canonical value). Reviewed by Saksham.
+    columns:
+      - name: match
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [exact, renamed, close, judgment, legacy]

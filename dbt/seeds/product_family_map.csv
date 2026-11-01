@@ -1,0 +1,33 @@
+product,sub_product,product_family,note
+Bank account or service,*,checking_savings,2017 relabel
+Checking or savings account,*,checking_savings,current
+Consumer Loan,*,payday_personal_loan,"retired 2017; installment, pawn, line of credit, title"
+Consumer Loan,Vehicle loan,vehicle_loan_lease,retired 2017
+Consumer Loan,Vehicle lease,vehicle_loan_lease,retired 2017
+Credit card,*,credit_card,2011-17 and again from Aug 2023
+Credit card or prepaid card,*,credit_card,2017-23 combined label; credit sub-products
+Credit card or prepaid card,General-purpose prepaid card,prepaid_card,2017-23 combined label
+Credit card or prepaid card,Gift card,prepaid_card,2017-23 combined label
+Credit card or prepaid card,Government benefit card,prepaid_card,2017-23 combined label
+Credit card or prepaid card,Payroll card,prepaid_card,2017-23 combined label
+Credit card or prepaid card,Student prepaid card,prepaid_card,2017-23 combined label
+Credit reporting,*,credit_reporting,retired 2017
+"Credit reporting, credit repair services, or other personal consumer reports",*,credit_reporting,2017-23 label
+"Credit reporting, credit repair services, or other personal consumer reports",Credit repair services,debt_credit_management,moved to Debt or credit management in 2023
+Credit reporting or other personal consumer reports,*,credit_reporting,current
+Debt collection,*,debt_collection,current
+Debt or credit management,*,debt_credit_management,current (from 2023)
+"Money transfer, virtual currency, or money service",*,money_transfer,2017+ label
+"Money transfer, virtual currency, or money service",Debt settlement,debt_credit_management,moved to Debt or credit management in 2023
+Money transfers,*,money_transfer,retired 2017
+Virtual currency,*,money_transfer,retired 2017
+Other financial service,*,money_transfer,"retired 2017; check cashing, money orders, FX"
+Other financial service,Credit repair,debt_credit_management,retired 2017
+Other financial service,Debt settlement,debt_credit_management,retired 2017
+Mortgage,*,mortgage,current
+Payday loan,*,payday_personal_loan,retired 2017
+"Payday loan, title loan, or personal loan",*,payday_personal_loan,2017-23 label
+"Payday loan, title loan, personal loan, or advance loan",*,payday_personal_loan,current
+Prepaid card,*,prepaid_card,current
+Student loan,*,student_loan,current
+Vehicle loan or lease,*,vehicle_loan_lease,current
