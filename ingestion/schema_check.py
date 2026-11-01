@@ -1,33 +1,14 @@
 """Schema drift check: fail loudly, naming what changed, when a source's fields differ.
 
-Used on the bulk CSV header (ordered: columns are read by position) and on every API record's
-`_source` keys (unordered: JSON objects). Fields are never silently dropped or renamed.
+Used on the bulk CSV header and on every API day export (same header; ordered: columns are
+read by position). `ordered=False` compares field sets (e.g. JSON keys). Fields are never
+silently dropped or renamed.
 """
 
 import logging
 from collections import Counter
 
 logger = logging.getLogger(__name__)
-
-# CFPB Search API `_source` field -> bulk CSV header (same 15 fields, no narrative).
-API_TO_BULK = {
-    "date_received": "Date received",
-    "product": "Product",
-    "sub_product": "Sub-product",
-    "issue": "Issue",
-    "sub_issue": "Sub-issue",
-    "company_public_response": "Company public response",
-    "company": "Company",
-    "state": "State",
-    "zip_code": "ZIP code",
-    "tags": "Tags",
-    "submitted_via": "Submitted via",
-    "date_sent_to_company": "Date sent to company",
-    "company_response": "Company response to consumer",
-    "timely": "Timely response?",
-    "complaint_id": "Complaint ID",
-}
-API_FIELDS = list(API_TO_BULK)
 
 
 class SchemaDriftError(ValueError):

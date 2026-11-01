@@ -1,28 +1,9 @@
-import json
 from pathlib import Path
 
 import pytest
 
 from ingestion.raw_csv import BULK_COLUMNS
-from ingestion.schema_check import API_FIELDS, API_TO_BULK, SchemaDriftError, check_fields
-
-API_RECORD = {
-    "product": "Credit card",
-    "date_sent_to_company": "2026-10-30T21:41:34.000Z",
-    "issue": "x",
-    "sub_product": None,
-    "zip_code": None,
-    "tags": None,
-    "complaint_id": "1",
-    "timely": "Yes",
-    "company_response": "In progress",
-    "submitted_via": "Web",
-    "company": "A",
-    "date_received": "2026-10-30T21:41:14.000Z",
-    "state": "CA",
-    "company_public_response": None,
-    "sub_issue": None,
-}
+from ingestion.schema_check import SchemaDriftError, check_fields
 
 
 def test_exact_match_passes():
@@ -59,15 +40,10 @@ def test_duplicated_field():
     assert "duplicated ['Tags']" in _drift([*BULK_COLUMNS, "Tags"])
 
 
-def test_api_record_fields_ignore_order_but_not_names():
-    check_fields(list(API_RECORD), API_FIELDS, "api", ordered=False)
-    drifted = {**API_RECORD, "complaint_what_happened": "text"}
-    assert "added ['complaint_what_happened']" in _drift(list(drifted), API_FIELDS, ordered=False)
-
-
-def test_api_fields_map_onto_every_bulk_column():
-    assert sorted(API_TO_BULK.values()) == sorted(BULK_COLUMNS)
-    assert json.loads(json.dumps(API_FIELDS)) == list(API_TO_BULK)
+def test_unordered_comparison_ignores_order_but_not_names():
+    check_fields(list(reversed(BULK_COLUMNS)), BULK_COLUMNS, "keys", ordered=False)
+    msg = _drift([*BULK_COLUMNS, "narrative"], ordered=False)
+    assert "added ['narrative']" in msg
 
 
 def test_bulk_ingest_reports_drift_by_name(tmp_path: Path, fixture_csv):
