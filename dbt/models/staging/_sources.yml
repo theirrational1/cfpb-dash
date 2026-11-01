@@ -5,3 +5,10 @@ sources:
       - name: complaints
         meta:
           external_location: "read_parquet('{{ env_var('CFPB_RAW_PARQUET') }}')"
+        columns:
+          - name: '"Timely response?"'
+            quote: false
+            data_tests:
+              - accepted_values:
+                  arguments:
+                    values: ["Yes", "No"]

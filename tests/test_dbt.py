@@ -28,6 +28,53 @@ def test_staging_types_and_limit(warehouse):
     assert "source_file" not in cols
 
 
+STAGING_COLUMNS = [
+    ("complaint_id", "BIGINT"),
+    ("date_received", "DATE"),
+    ("date_sent_to_company", "DATE"),
+    ("product", "VARCHAR"),
+    ("sub_product", "VARCHAR"),
+    ("issue", "VARCHAR"),
+    ("sub_issue", "VARCHAR"),
+    ("company", "VARCHAR"),
+    ("state", "VARCHAR"),
+    ("tags", "VARCHAR"),
+    ("submitted_via", "VARCHAR"),
+    ("company_response", "VARCHAR"),
+    ("company_public_response", "VARCHAR"),
+    ("timely", "BOOLEAN"),
+]
+
+
+def test_staging_contract_pins_columns_and_types(eras_warehouse):
+    """M2-04: the model contract fixes the column list (ZIP excluded) and types."""
+    cols = (
+        _con(eras_warehouse)
+        .execute(
+            "SELECT column_name, data_type FROM information_schema.columns "
+            "WHERE table_name = 'stg_complaints' ORDER BY ordinal_position"
+        )
+        .fetchall()
+    )
+    assert cols == STAGING_COLUMNS
+
+
+def test_staging_trims_company_and_types_timely(eras_warehouse):
+    con = _con(eras_warehouse)
+    assert con.execute(
+        "SELECT count(*) FROM stg_complaints WHERE company <> trim(company)"
+    ).fetchone() == (0,)
+    raw_padded = con.execute(
+        f"""SELECT count(*) FROM read_parquet('{eras_warehouse.raw_parquet}')
+            WHERE "Company" <> trim("Company")"""
+    ).fetchone()
+    assert raw_padded is not None and raw_padded[0] > 0  # the fixture does exercise it
+    assert con.execute("SELECT DISTINCT timely FROM stg_complaints ORDER BY 1").fetchall() == [
+        (False,),
+        (True,),
+    ]
+
+
 def test_mf_env_selects_the_readonly_target():
     from core.warehouse import REPO_ROOT
 

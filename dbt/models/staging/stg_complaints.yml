@@ -1,8 +1,47 @@
 models:
   - name: stg_complaints
-    description: One row per complaint, typed and snake_cased.
+    description: >
+      One row per complaint, typed and snake_cased (CLEANER Limit, Edit). The contract pins
+      the exact columns and types: zip_code is excluded (docs/decisions/nulls.md).
+    config:
+      contract:
+        enforced: true
     columns:
       - name: complaint_id
+        data_type: bigint
+        constraints: [{type: not_null}]
         data_tests: [unique, not_null]
       - name: date_received
+        data_type: date
+        data_tests: [not_null]
+      - name: date_sent_to_company
+        data_type: date
+        data_tests: [not_null]
+      - name: product
+        data_type: varchar
+        data_tests: [not_null]
+      - name: sub_product
+        data_type: varchar
+      - name: issue
+        data_type: varchar
+      - name: sub_issue
+        data_type: varchar
+      - name: company
+        description: Trimmed (24 raw names carry stray whitespace).
+        data_type: varchar
+        data_tests: [not_null]
+      - name: state
+        data_type: varchar
+      - name: tags
+        data_type: varchar
+      - name: submitted_via
+        data_type: varchar
+        data_tests: [not_null]
+      - name: company_response
+        data_type: varchar
+      - name: company_public_response
+        data_type: varchar
+      - name: timely
+        description: Raw 'Yes' / 'No' (accepted values tested on the source).
+        data_type: boolean
         data_tests: [not_null]
