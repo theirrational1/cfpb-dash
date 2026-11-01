@@ -35,6 +35,14 @@ def freeze(warehouse: Warehouse, snapshots: Path = SNAPSHOTS) -> Warehouse:
     wal = warehouse.duckdb_path.with_name(warehouse.duckdb_path.name + ".wal")
     if wal.exists():
         raise RuntimeError(f"{wal} exists: a writer has not checkpointed; close it first")
+    manifest = json.loads((warehouse.project_dir / "target" / "manifest.json").read_text())
+    target_run = manifest["metadata"]["invocation_id"]
+    if target_run != stamp["dbt_invocation_id"]:
+        raise RuntimeError(
+            f"{warehouse.project_dir}/target is from dbt run {target_run}, the warehouse "
+            f"from {stamp['dbt_invocation_id']}: the semantic manifest may not "
+            "match the data; run dbt build for this warehouse, then freeze"
+        )
     dest = snapshots / stamp["snapshot_date"]
     if dest.exists():
         raise FileExistsError(f"{dest} already exists; snapshots are immutable")

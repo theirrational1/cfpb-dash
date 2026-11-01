@@ -207,14 +207,16 @@ def read_snapshot_stamp(warehouse: Warehouse) -> dict[str, str]:
     with duckdb.connect(str(warehouse.duckdb_path), read_only=True) as con:
         rows = con.execute(
             """SELECT snapshot_date, source_sha256, CAST(built_at AS VARCHAR), data_start,
-                      data_end, staging_rows, fact_rows,
+                      data_end, dbt_invocation_id, staging_rows, fact_rows,
                       (SELECT count(*) FROM stg_complaints),
                       (SELECT count(*) FROM fct_complaints)
                FROM warehouse_snapshot"""
         ).fetchall()
     if len(rows) != 1:
         raise RuntimeError(f"{warehouse.duckdb_path}: warehouse_snapshot has {len(rows)} rows")
-    snapshot_date, sha, built_at, start, end, staging_rows, fact_rows, n_stg, n_fct = rows[0]
+    snapshot_date, sha, built_at, start, end, invocation, staging_rows, fact_rows, n_stg, n_fct = (
+        rows[0]
+    )
     if (n_stg, n_fct) != (staging_rows, fact_rows):
         raise RuntimeError(
             f"{warehouse.duckdb_path}: warehouse is inconsistent with its stamp "
@@ -227,6 +229,7 @@ def read_snapshot_stamp(warehouse: Warehouse) -> dict[str, str]:
         "built_at": built_at,
         "data_start": start,
         "data_end": end,
+        "dbt_invocation_id": invocation,
     }
 
 

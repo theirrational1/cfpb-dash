@@ -24,6 +24,7 @@ select
     fct.fact_rows,
     cast(fct.data_start as varchar) as data_start,
     cast(fct.data_end as varchar) as data_end,
+    '{{ invocation_id }}' as dbt_invocation_id,  -- ties the stamp to target/ artifacts
     current_timestamp as built_at
 from read_json('{{ env_var("CFPB_SNAPSHOT_JSON") }}', auto_detect = true) as s
 cross join (
