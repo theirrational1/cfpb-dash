@@ -8,6 +8,7 @@ import argparse
 import json
 import logging
 import os
+import zipfile
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -45,6 +46,36 @@ def _already_ingested(source: Path, out: Path, snapshot_date: str) -> dict[str, 
     return info if row is not None and row[0] == info["rows"] else None
 
 
+def _generated_at(source: Path) -> str:
+    if source.suffix == ".zip":
+        with zipfile.ZipFile(source) as z:
+            [member] = z.infolist()
+            stamp = datetime(*member.date_time, tzinfo=UTC)  # zip times carry no zone: UTC
+    else:
+        stamp = datetime.fromtimestamp(source.stat().st_mtime, tz=UTC)
+    return stamp.isoformat(timespec="seconds")
+
+
+def _dropped_since_previous(out: Path, new: Path) -> tuple[str | None, int]:
+    """Complaint IDs in the bulk file being replaced that the new one no longer has."""
+    snapshot = out.parent / "snapshot.json"
+    if not (out.is_file() and snapshot.is_file()):
+        return None, 0
+    row = (
+        duckdb.connect()
+        .execute(
+            f"""SELECT count(*) FROM (
+                SELECT "Complaint ID" FROM read_parquet({sql_str(out)})
+                EXCEPT SELECT "Complaint ID" FROM read_parquet({sql_str(new)}))"""
+        )
+        .fetchone()
+    )
+    dropped = row[0] if row else 0
+    if dropped:
+        logger.warning("%d complaint IDs in the previous bulk file are not in the new one", dropped)
+    return json.loads(snapshot.read_text())["source_sha256"], dropped
+
+
 def ingest(
     source: Path,
     out: Path,
@@ -52,8 +83,13 @@ def ingest(
     work_dir: Path,
     manifest_path: Path = RAW_MANIFEST,
     force: bool = False,
+    generated_at: str | None = None,
 ) -> dict[str, Any]:
     """Convert `source` to `out` (replacing it) and write out.parent/snapshot.json.
+
+    generated_at is when CFPB produced the data (UTC): the CSV's timestamp inside the zip, or
+    the file's mtime for a bare CSV unless given. Staging orders complaint versions by it.
+    Replacing a previous bulk file records how many complaint IDs dropped out of it.
 
     Idempotent: if snapshot.json already records this source (sha256) and snapshot date and
     `out` holds that many rows, nothing is rewritten (unless `force`)."""
@@ -68,6 +104,7 @@ def ingest(
 
     out.parent.mkdir(parents=True, exist_ok=True)
     tmp = out.with_name(out.name + ".tmp")
+    generated_at = generated_at or _generated_at(source)
     if source.suffix == ".zip":
         csv_path = extract_single_member(source, work_dir)
         rows = csv_to_parquet(csv_path, BULK_COLUMNS, tmp, source.name)
@@ -76,11 +113,15 @@ def ingest(
             work_dir.rmdir()
     else:
         rows = csv_to_parquet(source, BULK_COLUMNS, tmp, source.name)
+    previous_sha, dropped = _dropped_since_previous(out, tmp)
     info = {
         "source_path": str(source),
         "source_sha256": sha256_file(source),
         "snapshot_date": snapshot_date,
+        "generated_at": generated_at,
         "rows": rows,
+        "previous_sha256": previous_sha,
+        "dropped_since_previous": dropped,
         "built_at": datetime.now(UTC).isoformat(timespec="seconds"),
     }
     # Both files are complete before either is replaced; dbt's

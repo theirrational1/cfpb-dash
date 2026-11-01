@@ -156,8 +156,14 @@ def test_build_normalizes_pulls_into_parquet(raw_dir, tmp_path):
     assert row is not None
     assert row[:5] == (30, "2026-10-20", row[2], 30, 0)
     assert len(row[2]) == 10  # timestamps cut to YYYY-MM-DD, as in bulk
-    pulled = con.execute(f"SELECT day, rows FROM read_parquet('{days_out}') ORDER BY 1").fetchall()
-    assert pulled == [("2026-10-20", 13), ("2026-10-21", 10), ("2026-10-22", 7)]
+    pulled = con.execute(
+        f"SELECT day, rows, as_of_date_et FROM read_parquet('{days_out}') ORDER BY 1"
+    ).fetchall()
+    assert pulled == [
+        ("2026-10-20", 13, "2026-10-31"),  # last_indexed 2026-10-31T12:00-05:00
+        ("2026-10-21", 10, "2026-10-31"),
+        ("2026-10-22", 7, "2026-10-31"),
+    ]
 
 
 def test_build_with_no_pulls_writes_empty_tables(tmp_path):

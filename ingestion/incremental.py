@@ -26,6 +26,7 @@ from pathlib import Path
 from urllib.error import HTTPError
 from urllib.parse import urlencode
 from urllib.request import urlopen
+from zoneinfo import ZoneInfo
 
 import duckdb
 
@@ -42,6 +43,7 @@ RAW_DIR = REPO_ROOT / "data" / "raw"
 API_URL = "https://www.consumerfinance.gov/data-research/consumer-complaints/search/api/v1/"
 SOURCE = "CFPB Consumer Complaint Database — Search API (CSV export, one day per file)"
 LOOKBACK_DAYS = 15
+EASTERN = ZoneInfo("America/New_York")  # CFPB dates complaints and indexes in US Eastern time
 RETRY_STATUSES = {429, 500, 502, 503, 504}
 ATTEMPTS = 5
 BACKOFF_S = 30  # doubles per retry unless the server sends Retry-After
@@ -164,7 +166,7 @@ def _record(manifest_path: Path, path: Path, url: str, stamp: str) -> None:
     )
 
 
-def _normalized_select(csv_path: Path, pulled_at: str, day: str) -> str:
+def _normalized_select(csv_path: Path, pulled_at: str, as_of: str, day: str) -> str:
     """API export -> bulk representation: 'None' -> NULL, timestamps -> YYYY-MM-DD."""
     cols = []
     for c in BULK_COLUMNS:
@@ -174,40 +176,51 @@ def _normalized_select(csv_path: Path, pulled_at: str, day: str) -> str:
         cols.append(f'{expr} AS "{c}"')
     return (
         f"SELECT {', '.join(cols)}, CAST({sql_str(pulled_at)} AS TIMESTAMPTZ) AS pulled_at, "
-        f"{sql_str(day)} AS pulled_day "
+        f"CAST({sql_str(as_of)} AS TIMESTAMPTZ) AS as_of, {sql_str(day)} AS pulled_day "
         f"FROM read_csv({sql_str(csv_path)}, all_varchar=true, header=true, strict_mode=true)"
     )
 
 
 def build(api_root: Path, out: Path, days_out: Path) -> dict:
-    """Every complete pull (has pull.json) -> `out` (rows, bulk column names, plus pulled_at
-    and pulled_day) and `days_out` (one row per pulled day, including empty days, so dbt can
-    tell which days a pull covered). Both are replaced back to back."""
+    """Every complete pull (has pull.json) -> `out` (rows, bulk column names, plus pulled_at,
+    as_of and pulled_day) and `days_out` (one row per pulled day, including empty days, so dbt
+    can tell which days a pull covered). Both are replaced back to back.
+
+    as_of = the API's last_indexed: when CFPB produced the data this pull saw (staging orders
+    versions by it); as_of_date_et is its US Eastern date, the provenance snapshot date."""
     pulls = sorted(p.parent for p in api_root.glob("*/pull.json")) if api_root.is_dir() else []
     con = duckdb.connect()
     selects, days = [], []
     for pull_dir in pulls:
         info = json.loads((pull_dir / "pull.json").read_text())
+        if not info.get("last_indexed"):
+            raise ValueError(f"{pull_dir}/pull.json has no last_indexed")
+        as_of = datetime.fromisoformat(info["last_indexed"])
+        as_of_et = as_of.astimezone(EASTERN).date().isoformat()
         for day, rows in info["days"].items():
             path = pull_dir / f"{day}.csv"
             with path.open(newline="", encoding="utf-8") as f:
                 check_fields(next(csv.reader(f)), BULK_COLUMNS, str(path))
-            selects.append(_normalized_select(path, info["pulled_at"], day))
-            days.append((info["pulled_at"], day, rows))
+            selects.append(_normalized_select(path, info["pulled_at"], info["last_indexed"], day))
+            days.append((info["pulled_at"], info["last_indexed"], as_of_et, day, rows))
     empty = ", ".join(f'NULL::VARCHAR AS "{c}"' for c in BULK_COLUMNS)
     rows_sql = " UNION ALL ".join(selects) or (
-        f"SELECT {empty}, NULL::TIMESTAMPTZ AS pulled_at, NULL::VARCHAR AS pulled_day LIMIT 0"
+        f"SELECT {empty}, NULL::TIMESTAMPTZ AS pulled_at, NULL::TIMESTAMPTZ AS as_of, "
+        "NULL::VARCHAR AS pulled_day LIMIT 0"
     )
-    con.execute("CREATE TABLE pull_days (pulled_at TIMESTAMPTZ, day VARCHAR, rows BIGINT)")
+    con.execute(
+        "CREATE TABLE pull_days (pulled_at TIMESTAMPTZ, as_of TIMESTAMPTZ, as_of_date_et VARCHAR,"
+        " day VARCHAR, rows BIGINT)"
+    )
     if days:
-        con.executemany("INSERT INTO pull_days VALUES (?, ?, ?)", days)
+        con.executemany("INSERT INTO pull_days VALUES (?, ?, ?, ?, ?)", days)
 
     out.parent.mkdir(parents=True, exist_ok=True)
     tmp, days_tmp = out.with_name(out.name + ".tmp"), days_out.with_name(days_out.name + ".tmp")
     con.execute(f"COPY ({rows_sql}) TO {sql_str(tmp)} (FORMAT parquet)")
     con.execute(f"COPY pull_days TO {sql_str(days_tmp)} (FORMAT parquet)")
     written = con.execute(f"SELECT count(*) FROM read_parquet({sql_str(tmp)})").fetchone()
-    expected = sum(r for _, _, r in days)
+    expected = sum(d[-1] for d in days)
     if written is None or written[0] != expected:
         raise ValueError(f"API parquet has {written} rows, pull.json files say {expected}")
     os.replace(tmp, out)

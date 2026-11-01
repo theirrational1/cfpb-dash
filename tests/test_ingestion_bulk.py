@@ -84,3 +84,31 @@ def test_a_damaged_output_is_rebuilt(fixture_csv, tmp_path):
     out.unlink()
     ingest(fixture_csv, out, snapshot_date="2026-10-31", work_dir=tmp_path / "w")
     assert _rows(out) == 1002
+
+
+def test_snapshot_records_when_cfpb_generated_the_file(fixture_csv, tmp_path):
+    """Review 3 #1: versions are ordered by when the data was produced, not by a date."""
+    zp = tmp_path / "complaints.csv.zip"
+    with zipfile.ZipFile(zp, "w") as z:
+        info = zipfile.ZipInfo("complaints.csv", date_time=(2026, 10, 31, 9, 15, 40))
+        z.writestr(info, fixture_csv.read_bytes())
+    out = tmp_path / "raw" / "complaints.parquet"
+    assert ingest(zp, out, "2026-10-31", work_dir=tmp_path / "w")["generated_at"] == (
+        "2026-10-31T09:15:40+00:00"
+    )
+    csv_info = ingest(fixture_csv, tmp_path / "b" / "c.parquet", "2026-10-31", work_dir=tmp_path,
+                      generated_at="2026-10-31T00:00:00+00:00")  # fmt: skip
+    assert csv_info["generated_at"] == "2026-10-31T00:00:00+00:00"
+
+
+def test_replacing_a_bulk_file_counts_the_complaints_that_dropped_out(fixture_csv, tmp_path):
+    """Review 3 #2: complaints only in the previous bulk file used to vanish uncounted."""
+    out = tmp_path / "raw" / "complaints.parquet"
+    first = ingest(fixture_csv, out, "2026-10-31", work_dir=tmp_path / "w")
+    assert first["dropped_since_previous"] == 0 and first["previous_sha256"] is None
+    half = tmp_path / "half.csv"
+    lines = fixture_csv.read_text().splitlines(keepends=True)
+    half.write_text("".join(lines[:501]))
+    second = ingest(half, out, "2026-11-01", work_dir=tmp_path / "w")
+    assert second["dropped_since_previous"] == 502
+    assert second["previous_sha256"] == first["source_sha256"]

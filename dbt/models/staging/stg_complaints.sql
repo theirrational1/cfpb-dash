@@ -27,8 +27,9 @@ select
     end as company_public_response,
     cast("Date received" as date) >= date '2015-01-01' as public_response_available,
     "Timely response?" = 'Yes' as timely
-from {{ ref('stg_complaint_versions') }}
-where cast("Complaint ID" as bigint) not in (
-    select complaint_id from {{ ref('stg_removed_complaints') }}
+from {{ ref('stg_complaint_versions') }} as v
+where not exists (
+    select 1 from {{ ref('stg_removed_complaints') }} as r
+    where r.complaint_id = cast(v."Complaint ID" as bigint)
 )
-qualify row_number() over (partition by "Complaint ID" order by loaded_at desc) = 1
+qualify row_number() over (partition by "Complaint ID" {{ latest_version_order() }}) = 1

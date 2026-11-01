@@ -1,23 +1,42 @@
--- Complaints whose received day was re-pulled after their latest version, but which the
--- latest pull of that day no longer contains: removed from the public database since. They
--- leave staging, and are counted here (a counted exclusion, never a silent drop).
+-- Complaints removed from the public database: a newer complete source covering their
+-- received day no longer contains them. Complete sources: each pull for the days it covered,
+-- and the bulk file for every day up to its last received day. They leave staging and are
+-- counted here (a counted exclusion, never a silent drop).
 with latest as (
     select "Complaint ID" as complaint_id, cast("Date received" as date) as date_received,
-           loaded_at, loaded_from
+           as_of, loaded_from
     from {{ ref('stg_complaint_versions') }}
-    qualify row_number() over (partition by "Complaint ID" order by loaded_at desc) = 1
+    qualify row_number() over (partition by "Complaint ID" {{ latest_version_order() }}) = 1
 ),
 
-last_pull as (
-    select day, max(pulled_at) as pulled_at from {{ ref('stg_api_pull_days') }} group by day
+pull_cover as (
+    select day, max(as_of) as covered_as_of from {{ ref('stg_api_pull_days') }} group by day
+),
+
+bulk as (
+    select max(as_of) as bulk_as_of, max(cast("Date received" as date)) as bulk_last_day
+    from {{ ref('stg_complaint_versions') }}
+    where loaded_from = 'bulk'
+),
+
+covered as (
+    select
+        l.*,
+        greatest(
+            coalesce(p.covered_as_of, timestamptz '0001-01-01 00:00:00+00'),
+            case when l.date_received <= b.bulk_last_day then b.bulk_as_of
+                 else timestamptz '0001-01-01 00:00:00+00' end
+        ) as newest_cover
+    from latest as l
+    left join pull_cover as p on l.date_received = p.day
+    cross join bulk as b
 )
 
 select
-    cast(l.complaint_id as bigint) as complaint_id,
-    l.date_received,
-    l.loaded_from as last_seen_in,
-    l.loaded_at as last_seen_at,
-    p.pulled_at as missing_from_pull_at
-from latest as l
-inner join last_pull as p on l.date_received = p.day
-where l.loaded_at < p.pulled_at
+    cast(complaint_id as bigint) as complaint_id,
+    date_received,
+    loaded_from as last_seen_in,
+    as_of as last_seen_as_of,
+    newest_cover as missing_from_source_as_of
+from covered
+where newest_cover > as_of
