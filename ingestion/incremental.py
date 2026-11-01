@@ -13,6 +13,7 @@ MANIFEST.json.
 Run: uv run python -m ingestion.incremental
 """
 
+import argparse
 import csv
 import io
 import json
@@ -28,18 +29,23 @@ from urllib.request import urlopen
 
 import duckdb
 
+from core.log import configure_logging
+from core.warehouse import REPO_ROOT, Warehouse
 from ingestion.manifest import append_entry, sha256_file
 from ingestion.raw_csv import BULK_COLUMNS, sql_str
 from ingestion.schema_check import check_fields
 
 logger = logging.getLogger(__name__)
 
+RAW_DIR = REPO_ROOT / "data" / "raw"
+
 API_URL = "https://www.consumerfinance.gov/data-research/consumer-complaints/search/api/v1/"
 SOURCE = "CFPB Consumer Complaint Database — Search API (CSV export, one day per file)"
 LOOKBACK_DAYS = 15
 RETRY_STATUSES = {429, 500, 502, 503, 504}
-ATTEMPTS = 4
-REQUEST_PAUSE_S = 0.5  # be polite: requests are sequential with a short pause
+ATTEMPTS = 5
+BACKOFF_S = 30  # doubles per retry unless the server sends Retry-After
+REQUEST_PAUSE_S = 3  # be polite: requests are sequential with a pause (the API rate-limits)
 
 Fetch = Callable[[str], bytes]
 
@@ -64,7 +70,12 @@ def _get(url: str, fetch: Fetch, sleep: Callable[[float], None]) -> bytes:
         except HTTPError as e:
             if e.code not in RETRY_STATUSES or attempt == ATTEMPTS:
                 raise
-            wait = 2**attempt
+            retry_after = e.headers.get("Retry-After") if e.headers else None
+            wait = (
+                int(retry_after)
+                if retry_after and retry_after.isdigit()
+                else (BACKOFF_S * 2 ** (attempt - 1))
+            )
             logger.warning("HTTP %d for %s; retry %d in %ds", e.code, url, attempt, wait)
             sleep(wait)
     raise AssertionError("unreachable")
@@ -204,3 +215,37 @@ def build(api_root: Path, out: Path, days_out: Path) -> dict:
     latest = json.loads((pulls[-1] / "pull.json").read_text())["pulled_at"] if pulls else None
     logger.info("built %s: %d pulls, %d rows", out, len(pulls), expected)
     return {"pulls": len(pulls), "rows": expected, "latest_pulled_at": latest}
+
+
+def coverage_end(warehouse: Warehouse) -> date:
+    """The latest received day already covered by the bulk file or any pull."""
+    con = duckdb.connect()
+    row = con.execute(
+        f"""SELECT greatest(
+                (SELECT max(CAST("Date received" AS DATE))
+                 FROM read_parquet({sql_str(warehouse.raw_parquet)})),
+                (SELECT max(CAST(day AS DATE))
+                 FROM read_parquet({sql_str(warehouse.api_pull_days)})))"""
+    ).fetchone()
+    if row is None or row[0] is None:
+        raise ValueError(f"{warehouse.raw_parquet}: no received dates; ingest the bulk file first")
+    return row[0]
+
+
+def main() -> None:
+    configure_logging()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--build-only", action="store_true", help="rebuild Parquet, no pull")
+    args = parser.parse_args()
+    wh = Warehouse.from_env()
+    if not args.build_only:
+        if not wh.api_pull_days.exists():
+            build(RAW_DIR / "api", wh.api_parquet, wh.api_pull_days)
+        days = pull_window(coverage_end(wh), date.today())
+        logger.info("pulling %s..%s (%d days)", days[0], days[-1], len(days))
+        pull(days, RAW_DIR, RAW_DIR / "MANIFEST.json")
+    build(RAW_DIR / "api", wh.api_parquet, wh.api_pull_days)
+
+
+if __name__ == "__main__":
+    main()

@@ -28,12 +28,15 @@ NOW = datetime(2026, 11, 1, 6, 0, tzinfo=UTC)
 class FakeApi:
     """Serves the recorded day CSVs and count responses; records every URL requested."""
 
-    def __init__(self, meta_override=None, count_offset=0, csv_edit=None, fail_first=None):
+    def __init__(
+        self, meta_override=None, count_offset=0, csv_edit=None, fail_first=None, retry_after=None
+    ):
         self.urls: list[str] = []
         self.meta_override = meta_override or {}
         self.count_offset = count_offset
         self.csv_edit = csv_edit
         self.fail_first = list(fail_first or [])
+        self.retry_after = retry_after
 
     def _csv(self, day: str) -> bytes:
         text = (API_FIXTURES / f"citi_cc_{day}.csv").read_text()
@@ -42,7 +45,10 @@ class FakeApi:
     def __call__(self, url: str) -> bytes:
         self.urls.append(url)
         if self.fail_first:
-            raise HTTPError(url, self.fail_first.pop(0), "fail", Message(), BytesIO())
+            headers = Message()
+            if self.retry_after:
+                headers["Retry-After"] = self.retry_after
+            raise HTTPError(url, self.fail_first.pop(0), "fail", headers, BytesIO())
         q = parse_qs(urlparse(url).query)
         day = q["date_received_min"][0]
         assert q["date_received_max"] == [day], "one day per request"
@@ -114,7 +120,12 @@ def test_transient_errors_are_retried_and_others_raise(raw_dir):
     sleeps: list[float] = []
     api = FakeApi(fail_first=[503, 429])
     pull(DAYS[:1], raw_dir, raw_dir / "MANIFEST.json", fetch=api, now=NOW, sleep=sleeps.append)
-    assert sleeps == [2, 4, 0.5]  # two backoffs, then the polite pause after the day
+    assert sleeps == [30, 60, 3]  # two backoffs, then the polite pause after the day
+    honoured: list[float] = []
+    api = FakeApi(fail_first=[429], retry_after="7")
+    pull(DAYS[:1], raw_dir, raw_dir / "MANIFEST.json", fetch=api,
+         now=datetime(2026, 11, 3, tzinfo=UTC), sleep=honoured.append)  # fmt: skip
+    assert honoured[0] == 7  # the server's Retry-After wins
     with pytest.raises(HTTPError):
         pull(DAYS[:1], raw_dir, raw_dir / "MANIFEST.json", fetch=FakeApi(fail_first=[404]),
              now=datetime(2026, 11, 2, tzinfo=UTC), sleep=lambda s: None)  # fmt: skip
@@ -165,3 +176,17 @@ def test_build_skips_incomplete_pulls(raw_dir, tmp_path):
     partial.mkdir(parents=True)
     (partial / "2026-10-20.csv").write_text((API_FIXTURES / "citi_cc_2026-10-20.csv").read_text())
     assert build(raw_dir / "api", tmp_path / "a.parquet", tmp_path / "d.parquet")["pulls"] == 0
+
+
+def test_coverage_end_is_the_latest_day_in_bulk_or_pulls(raw_dir, tmp_path, fixture_csv):
+    from core.warehouse import Warehouse
+    from ingestion.bulk import ingest
+    from ingestion.incremental import build, coverage_end
+
+    wh = Warehouse(tmp_path / "wh")
+    ingest(fixture_csv, wh.raw_parquet, snapshot_date="2026-10-31", work_dir=tmp_path / "w")
+    build(raw_dir / "api", wh.api_parquet, wh.api_pull_days)
+    assert coverage_end(wh) == date(2026, 6, 30)  # the fixture's last received day
+    pull(DAYS, raw_dir, raw_dir / "MANIFEST.json", fetch=FakeApi(), now=NOW, sleep=lambda s: None)
+    build(raw_dir / "api", wh.api_parquet, wh.api_pull_days)
+    assert coverage_end(wh) == date(2026, 10, 22)

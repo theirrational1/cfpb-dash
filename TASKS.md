@@ -56,7 +56,7 @@ Small, specific tasks to implement `PRD.md`. TDD for every feature. One mileston
 **Track A — ingestion**
 - [x] M2-01 `schema_check.py` + tests (fail on added/removed/renamed fields)
 - [x] M2-02 Full bulk ingestion, idempotent
-- [ ] M2-03 Incremental API pull by `date_received`, upsert by `complaint_id`, changed-record handling; tests with recorded API fixtures
+- [x] M2-03 Incremental API pull by `date_received`, upsert by `complaint_id`, changed-record handling; tests with recorded API fixtures
 
 **Track B — dbt (CLEANER: Limit, Edit, Audit, Null → staging; Engineer → intermediate)**
 - [x] M2-04 Staging: limit columns, snake_case names, types

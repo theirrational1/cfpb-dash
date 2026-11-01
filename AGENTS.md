@@ -28,7 +28,7 @@ uv sync
 uv run python -m ingestion.fetch_bulk     # download CFPB bulk zip → data/raw/bulk/ + MANIFEST.json
 uv run pytest -m data                     # recompute every checksum in data/raw/MANIFEST.json (slow, local only)
 uv run python -m ingestion.bulk --source data/raw/bulk/<file>.csv.zip   # raw Parquet + snapshot.json
-uv run python -m ingestion.incremental    # daily API pull
+uv run python -m ingestion.incremental    # daily API pull: re-pulls 15 days + builds (--build-only)
 uv run --env-file dbt.env dbt build       # models + tests (run from repo root; dbt.env sets paths)
 uv run --env-file dbt.env --env-file mf.env mf validate-configs   # mf.env: read-only target
 uv run --env-file dbt.env --env-file mf.env mf query --metrics <m> --group-by <d>

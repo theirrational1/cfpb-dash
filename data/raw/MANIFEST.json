@@ -1,6 +1,6 @@
 {
   "manifest_version": 1,
-  "generated_at": "2026-10-31T18:49:08+00:00",
+  "generated_at": "2026-11-01T05:16:55+00:00",
   "notes": "Narrative files: retrieved_at taken from file modification time. Bulk file: retrieved_at is the download date (ingestion.fetch_bulk).",
   "files": [
     {
@@ -178,6 +178,150 @@
       "retrieved_at": "2026-10-31",
       "size_bytes": 361040925,
       "sha256": "29c44f21534e5b70eb4ec63c3c90315e97b6d7316fd1641e6c09f2111195fc94"
+    },
+    {
+      "path": "api/20261101T051655Z/2026-10-15.csv",
+      "source": "CFPB Consumer Complaint Database \u2014 Search API (CSV export, one day per file)",
+      "source_url": "https://www.consumerfinance.gov/data-research/consumer-complaints/search/api/v1/?date_received_min=2026-10-15&date_received_max=2026-10-15&no_aggs=true&format=csv",
+      "retrieved_at": "2026-11-01",
+      "size_bytes": 9732697,
+      "sha256": "a14b3bc56ee0b343f729a1d3d0733f33f17f0eadb947ba0958cac2d51ac6ae13"
+    },
+    {
+      "path": "api/20261101T051655Z/2026-10-16.csv",
+      "source": "CFPB Consumer Complaint Database \u2014 Search API (CSV export, one day per file)",
+      "source_url": "https://www.consumerfinance.gov/data-research/consumer-complaints/search/api/v1/?date_received_min=2026-10-16&date_received_max=2026-10-16&no_aggs=true&format=csv",
+      "retrieved_at": "2026-11-01",
+      "size_bytes": 9045908,
+      "sha256": "5abca58b363a003d2d3acb1f728d02c9aeecc596c9f0fd987ee54d51fa728be0"
+    },
+    {
+      "path": "api/20261101T051655Z/2026-10-17.csv",
+      "source": "CFPB Consumer Complaint Database \u2014 Search API (CSV export, one day per file)",
+      "source_url": "https://www.consumerfinance.gov/data-research/consumer-complaints/search/api/v1/?date_received_min=2026-10-17&date_received_max=2026-10-17&no_aggs=true&format=csv",
+      "retrieved_at": "2026-11-01",
+      "size_bytes": 4287590,
+      "sha256": "fb799271542c600e92f038d404677adb4331b21433ff444d47aa6d0e2478a871"
+    },
+    {
+      "path": "api/20261101T051655Z/2026-10-18.csv",
+      "source": "CFPB Consumer Complaint Database \u2014 Search API (CSV export, one day per file)",
+      "source_url": "https://www.consumerfinance.gov/data-research/consumer-complaints/search/api/v1/?date_received_min=2026-10-18&date_received_max=2026-10-18&no_aggs=true&format=csv",
+      "retrieved_at": "2026-11-01",
+      "size_bytes": 2025008,
+      "sha256": "b49fc80172af5e556ac9b04e70730b1732fd1dc7339d51e5a3c2d0a34c4365ac"
+    },
+    {
+      "path": "api/20261101T051655Z/2026-10-19.csv",
+      "source": "CFPB Consumer Complaint Database \u2014 Search API (CSV export, one day per file)",
+      "source_url": "https://www.consumerfinance.gov/data-research/consumer-complaints/search/api/v1/?date_received_min=2026-10-19&date_received_max=2026-10-19&no_aggs=true&format=csv",
+      "retrieved_at": "2026-11-01",
+      "size_bytes": 6361738,
+      "sha256": "af6a7afc3edb74d7fc9350e849d8e7f22879c233daefaf3536848948e438b9e4"
+    },
+    {
+      "path": "api/20261101T051655Z/2026-10-20.csv",
+      "source": "CFPB Consumer Complaint Database \u2014 Search API (CSV export, one day per file)",
+      "source_url": "https://www.consumerfinance.gov/data-research/consumer-complaints/search/api/v1/?date_received_min=2026-10-20&date_received_max=2026-10-20&no_aggs=true&format=csv",
+      "retrieved_at": "2026-11-01",
+      "size_bytes": 8423126,
+      "sha256": "02c057b91e27e8e5eeaa4d6445bbe2b392dc5af42ce0844d6b3d3a5965772700"
+    },
+    {
+      "path": "api/20261101T051655Z/2026-10-21.csv",
+      "source": "CFPB Consumer Complaint Database \u2014 Search API (CSV export, one day per file)",
+      "source_url": "https://www.consumerfinance.gov/data-research/consumer-complaints/search/api/v1/?date_received_min=2026-10-21&date_received_max=2026-10-21&no_aggs=true&format=csv",
+      "retrieved_at": "2026-11-01",
+      "size_bytes": 8327723,
+      "sha256": "d0ef0ac869b01452b5fd170121c10b5bde2810dd9b509d915db66dde4186caa2"
+    },
+    {
+      "path": "api/20261101T051655Z/2026-10-22.csv",
+      "source": "CFPB Consumer Complaint Database \u2014 Search API (CSV export, one day per file)",
+      "source_url": "https://www.consumerfinance.gov/data-research/consumer-complaints/search/api/v1/?date_received_min=2026-10-22&date_received_max=2026-10-22&no_aggs=true&format=csv",
+      "retrieved_at": "2026-11-01",
+      "size_bytes": 8255423,
+      "sha256": "b28e85b360992ce0b9a9e87d42acbd6e2dc8e6a23d703ad857944b2c1e460c34"
+    },
+    {
+      "path": "api/20261101T051655Z/2026-10-23.csv",
+      "source": "CFPB Consumer Complaint Database \u2014 Search API (CSV export, one day per file)",
+      "source_url": "https://www.consumerfinance.gov/data-research/consumer-complaints/search/api/v1/?date_received_min=2026-10-23&date_received_max=2026-10-23&no_aggs=true&format=csv",
+      "retrieved_at": "2026-11-01",
+      "size_bytes": 7860717,
+      "sha256": "e926dcf25b5cf51cf8a11ae947d454f35bf9dbf2568bcfbc193f6648d55caa10"
+    },
+    {
+      "path": "api/20261101T051655Z/2026-10-24.csv",
+      "source": "CFPB Consumer Complaint Database \u2014 Search API (CSV export, one day per file)",
+      "source_url": "https://www.consumerfinance.gov/data-research/consumer-complaints/search/api/v1/?date_received_min=2026-10-24&date_received_max=2026-10-24&no_aggs=true&format=csv",
+      "retrieved_at": "2026-11-01",
+      "size_bytes": 3562054,
+      "sha256": "eb7ae6f65854835f5d0dbeed3beeacfe62a8872cbd8e5d731d1f45031aff1c9e"
+    },
+    {
+      "path": "api/20261101T051655Z/2026-10-25.csv",
+      "source": "CFPB Consumer Complaint Database \u2014 Search API (CSV export, one day per file)",
+      "source_url": "https://www.consumerfinance.gov/data-research/consumer-complaints/search/api/v1/?date_received_min=2026-10-25&date_received_max=2026-10-25&no_aggs=true&format=csv",
+      "retrieved_at": "2026-11-01",
+      "size_bytes": 1302678,
+      "sha256": "e1931c940b59a887ed9b6c174553991cd76d03b8a186383f620bc9deeec7db33"
+    },
+    {
+      "path": "api/20261101T051655Z/2026-10-26.csv",
+      "source": "CFPB Consumer Complaint Database \u2014 Search API (CSV export, one day per file)",
+      "source_url": "https://www.consumerfinance.gov/data-research/consumer-complaints/search/api/v1/?date_received_min=2026-10-26&date_received_max=2026-10-26&no_aggs=true&format=csv",
+      "retrieved_at": "2026-11-01",
+      "size_bytes": 4799234,
+      "sha256": "ce62eca5ec6997d5727ea4b18080e61eedec6e05f3b39b7cc4b7d9b0e11badf7"
+    },
+    {
+      "path": "api/20261101T051655Z/2026-10-27.csv",
+      "source": "CFPB Consumer Complaint Database \u2014 Search API (CSV export, one day per file)",
+      "source_url": "https://www.consumerfinance.gov/data-research/consumer-complaints/search/api/v1/?date_received_min=2026-10-27&date_received_max=2026-10-27&no_aggs=true&format=csv",
+      "retrieved_at": "2026-11-01",
+      "size_bytes": 5820850,
+      "sha256": "39ebdcbde3a76c0b110fbb3948534918e5fc09b8db59c40adaafa0ab6f3d718d"
+    },
+    {
+      "path": "api/20261101T051655Z/2026-10-28.csv",
+      "source": "CFPB Consumer Complaint Database \u2014 Search API (CSV export, one day per file)",
+      "source_url": "https://www.consumerfinance.gov/data-research/consumer-complaints/search/api/v1/?date_received_min=2026-10-28&date_received_max=2026-10-28&no_aggs=true&format=csv",
+      "retrieved_at": "2026-11-01",
+      "size_bytes": 5695001,
+      "sha256": "e6522b3bd312bfa3ab7e00356c18dfa6ad11e95dba113875e8c99b7710777fab"
+    },
+    {
+      "path": "api/20261101T051655Z/2026-10-29.csv",
+      "source": "CFPB Consumer Complaint Database \u2014 Search API (CSV export, one day per file)",
+      "source_url": "https://www.consumerfinance.gov/data-research/consumer-complaints/search/api/v1/?date_received_min=2026-10-29&date_received_max=2026-10-29&no_aggs=true&format=csv",
+      "retrieved_at": "2026-11-01",
+      "size_bytes": 5185346,
+      "sha256": "15383a0b68a0ac23152f4e05f463bc0d2aedebcc35ceb5ffd0707207f19bba45"
+    },
+    {
+      "path": "api/20261101T051655Z/2026-10-30.csv",
+      "source": "CFPB Consumer Complaint Database \u2014 Search API (CSV export, one day per file)",
+      "source_url": "https://www.consumerfinance.gov/data-research/consumer-complaints/search/api/v1/?date_received_min=2026-10-30&date_received_max=2026-10-30&no_aggs=true&format=csv",
+      "retrieved_at": "2026-11-01",
+      "size_bytes": 1282261,
+      "sha256": "18d463b274541b7b84ad3f517e750fc69f69d52faccbb920d70f1e183f881270"
+    },
+    {
+      "path": "api/20261101T051655Z/2026-10-31.csv",
+      "source": "CFPB Consumer Complaint Database \u2014 Search API (CSV export, one day per file)",
+      "source_url": "https://www.consumerfinance.gov/data-research/consumer-complaints/search/api/v1/?date_received_min=2026-10-31&date_received_max=2026-10-31&no_aggs=true&format=csv",
+      "retrieved_at": "2026-11-01",
+      "size_bytes": 197,
+      "sha256": "743e96271906ac1e41768dc0a54aa65d222a981409f00b05b060da542eeebf0b"
+    },
+    {
+      "path": "api/20261101T051655Z/pull.json",
+      "source": "CFPB Consumer Complaint Database \u2014 Search API (CSV export, one day per file)",
+      "source_url": "https://www.consumerfinance.gov/data-research/consumer-complaints/search/api/v1/",
+      "retrieved_at": "2026-11-01",
+      "size_bytes": 575,
+      "sha256": "887824a3a40b98113b9eadce714c6097805dbeef57e6bbeb4646ededdab3cc7c"
     }
   ]
 }
