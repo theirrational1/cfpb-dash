@@ -64,6 +64,16 @@ models:
           - accepted_values:
               arguments:
                 values: "{{ var('volume_tier_labels') }}"
+  - name: data_coverage
+    description: >
+      Coverage source table (M3-04): freshness, every counted exclusion behind the metrics,
+      and fixed caveats, as (item, scope, value, note). Read by the coverage panel and, in M5,
+      get_data_coverage.
+    columns:
+      - name: item
+        data_tests: [not_null]
+      - name: note
+        data_tests: [not_null]
   - name: metricflow_time_spine
     description: Daily time spine required by MetricFlow.
     time_spine:

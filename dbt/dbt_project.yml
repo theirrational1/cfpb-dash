@@ -25,6 +25,7 @@ vars:
   min_volume_threshold: 100
   volume_tiers_version: 1
   volume_tier_labels: [high, middle, low]
+  narrative_cutoff: "2026-06-30"  # M0-15 decision: narratives received on or before this
 
 flags:
   send_anonymous_usage_stats: false

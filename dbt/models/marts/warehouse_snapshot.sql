@@ -6,18 +6,19 @@
 -- never the clock time a pull ran). Built last: it also depends on the peer groups.
 -- depends_on: {{ ref('metricflow_time_spine') }}
 -- depends_on: {{ ref('dim_company_product') }}
+-- depends_on: {{ ref('data_coverage') }}
 select
     cast((select snapshot_date from {{ ref('int_snapshot_date') }}) as varchar) as snapshot_date,
     cast(s.snapshot_date as varchar) as bulk_snapshot_date,
-    cast(s.generated_at as varchar) as bulk_generated_at,
+    {{ utc_iso('s.generated_at') }} as bulk_generated_at,
     cast(s.dropped_since_previous as bigint) as bulk_dropped_since_previous,
     cast(s.source_sha256 as varchar) as source_sha256,
     cast(s.source_path as varchar) as source_path,
     cast(s."rows" as bigint) as source_rows,
     cast(s.built_at as varchar) as ingested_at,
     api.api_pulls,
-    cast(api.latest_pulled_at as varchar) as latest_pulled_at,
-    cast(api.latest_as_of as varchar) as latest_pull_as_of,
+    {{ utc_iso('api.latest_pulled_at') }} as latest_pulled_at,
+    {{ utc_iso('api.latest_as_of') }} as latest_pull_as_of,
     (select count(*) from {{ ref('stg_removed_complaints') }}) as removed_rows,
     (select count(*) from {{ ref('stg_complaints') }}) as staging_rows,
     fct.fact_rows,
