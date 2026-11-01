@@ -165,10 +165,11 @@ def run(question: str, gateway: Gateway, warehouse: Warehouse, max_steps: int = 
                         metric_values.add(float(v))
                     elif isinstance(v, str):  # dimension values, e.g. dates in grouped rows
                         context_numbers.update(numbers_in(v))
-            for v in out.provenance.filters.values():
+            for v in out.provenance.filters.values():  # real values: query_metric checks them
                 context_numbers.update(numbers_in(v))
-            for t in out.provenance.time_range:
-                context_numbers.update(numbers_in(t or ""))
+            for t in out.provenance.time_range:  # validated YYYY-MM-DD: only its date parts
+                if t:
+                    context_numbers.update(float(part) for part in t.split("-"))
             messages.append(
                 {
                     "role": "tool",

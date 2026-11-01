@@ -144,3 +144,26 @@ def test_bad_tool_arguments_are_typed_model_errors(warehouse, tmp_path):
         _, gw = _gateway(tmp_path / call.arguments_json[:5].replace("/", "_"), [result])
         with pytest.raises(ToolArgumentError):
             run("q", gw, warehouse)
+
+
+def test_model_cannot_launder_a_number_through_a_filter_value(warehouse, tmp_path):
+    """Review 2 #3: numbers in filter values were whitelisted, and the model writes filters."""
+    launder = ToolCall.of(
+        "c2", "query_metric", {**ARGS, "filters": {"complaint__company": "up 999 percent"}}
+    )
+    script = [
+        _tool_call(),
+        ChatResult(None, [launder], Usage(1, 1), "fake"),
+        _final('{"answer": "16 complaints, up 999% year over year.", "value": 16}'),
+    ]
+    _, gw = _gateway(tmp_path, script)
+    with pytest.raises(ToolArgumentError, match="not in the data"):
+        run("How many complaints did Citibank receive in March 2026?", gw, warehouse)
+
+
+def test_time_range_contributes_only_its_date_parts(warehouse, tmp_path):
+    n = _march_count(warehouse)
+    # 1, 3 and 31 are parts of 2026-03-01..2026-03-31 (the regex used to read them as -3, -31)
+    text = f"{n} complaints from 1 to 31 March (month 3) 2026, not {n * 3}."
+    a = _answer(tmp_path, warehouse, json.dumps({"answer": text, "value": n}))
+    assert a.untraced_numbers == [float(n * 3)]
