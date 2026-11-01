@@ -132,14 +132,35 @@ def _where(dimension: str, value: str) -> str:
 
 def read_snapshot_stamp(warehouse: Warehouse) -> dict[str, str]:
     """The snapshot the warehouse was BUILT from (dbt model warehouse_snapshot), not the raw
-    snapshot.json, which can be newer than the last build."""
+    snapshot.json, which can be newer than the last build.
+
+    A failed `dbt build` can rebuild staging while skipping the fact and the stamp; the row
+    counts then disagree with the stamp and this raises instead of mislabelling old numbers.
+    """
     with duckdb.connect(str(warehouse.duckdb_path), read_only=True) as con:
         rows = con.execute(
-            "SELECT snapshot_date, source_sha256, CAST(built_at AS VARCHAR) FROM warehouse_snapshot"
+            """SELECT snapshot_date, source_sha256, CAST(built_at AS VARCHAR), data_start,
+                      data_end, source_rows, fact_rows,
+                      (SELECT count(*) FROM stg_complaints),
+                      (SELECT count(*) FROM fct_complaints)
+               FROM warehouse_snapshot"""
         ).fetchall()
     if len(rows) != 1:
         raise RuntimeError(f"{warehouse.duckdb_path}: warehouse_snapshot has {len(rows)} rows")
-    return {"snapshot_date": rows[0][0], "source_sha256": rows[0][1], "built_at": rows[0][2]}
+    snapshot_date, sha, built_at, start, end, source_rows, fact_rows, n_stg, n_fct = rows[0]
+    if (n_stg, n_fct) != (source_rows, fact_rows):
+        raise RuntimeError(
+            f"{warehouse.duckdb_path}: warehouse is inconsistent with its stamp "
+            f"(staging {n_stg} vs {source_rows}, fact {n_fct} vs {fact_rows} rows); "
+            "the last dbt build probably failed, rebuild it"
+        )
+    return {
+        "snapshot_date": snapshot_date,
+        "source_sha256": sha,
+        "built_at": built_at,
+        "data_start": start,
+        "data_end": end,
+    }
 
 
 def _number(value: str) -> int | float | None:

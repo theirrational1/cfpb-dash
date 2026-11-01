@@ -5,9 +5,10 @@ import csv
 import shutil
 
 import duckdb
+import pytest
 
-from agent.tools.query_metric import query_metric
-from core.warehouse import Warehouse
+from agent.tools.query_metric import query_metric, read_snapshot_stamp
+from core.warehouse import Warehouse, run_cli
 from evals.harness.cases import Case
 from evals.harness.runner import ground_truth
 from ingestion.bulk import ingest
@@ -65,6 +66,42 @@ def test_frozen_copy_is_self_contained_and_provenance_follows_the_build(
     # the un-rebuilt original still labels its (old) data with the old snapshot, not the new file
     p = query_metric(["complaint_count"], warehouse=original).provenance
     assert p.snapshot_date == "2026-10-31"
+
+
+def _with_duplicate_id(fixture_csv, dest):
+    with fixture_csv.open(newline="") as f:
+        rows = list(csv.reader(f))
+    with dest.open("w", newline="") as f:
+        csv.writer(f).writerows([*rows, rows[1]])
+    return dest
+
+
+def test_failed_rebuild_never_labels_old_numbers_with_the_new_snapshot(
+    tmp_path, fixture_csv, dbt_project
+):
+    """Review 2 #1: the stamp used to rebuild even when the fact table was skipped."""
+    wh = build_warehouse(tmp_path / "wh", fixture_csv, "2026-10-31", dbt_project)
+    stamp = read_snapshot_stamp(wh)
+    assert (stamp["data_start"], stamp["data_end"]) == ("2025-01-02", "2026-06-30")
+
+    ingest(
+        _with_duplicate_id(fixture_csv, tmp_path / "dup.csv"),
+        wh.raw_parquet,
+        snapshot_date="2026-12-01",
+        work_dir=tmp_path / "work",
+    )
+    with pytest.raises(RuntimeError, match="unique_stg_complaints_complaint_id"):
+        run_cli("dbt", ["build"], wh)
+
+    # staging moved (1003 rows) but the fact and stamp did not: refuse, don't mislabel
+    with duckdb.connect(str(wh.duckdb_path), read_only=True) as con:
+        assert con.execute("SELECT snapshot_date FROM warehouse_snapshot").fetchall() == [
+            ("2026-10-31",)
+        ]
+    with pytest.raises(RuntimeError, match="inconsistent"):
+        read_snapshot_stamp(wh)
+    with pytest.raises(RuntimeError, match="inconsistent"):
+        query_metric(["complaint_count"], warehouse=wh)
 
 
 def test_query_metric_works_while_another_reader_holds_the_warehouse(warehouse):
