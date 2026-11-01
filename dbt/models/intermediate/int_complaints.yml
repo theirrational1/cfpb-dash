@@ -16,3 +16,40 @@ models:
         description: >
           Credit card rows only: the issue on the current (2023+) credit card issue list
           (seed credit_card_issue_map). Null for other families and for the null-issue rows.
+      - name: company_key
+        description: Canonical company (dim_company). Match rate must be 100%.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_company')
+                field: company_key
+  - name: dim_company
+    description: >
+      One row per canonical company: normalized name (case, spacing) plus reviewed aliases.
+      Acquisitions are kept as separate companies, as CFPB reports them.
+    columns:
+      - name: company_key
+        data_tests: [unique, not_null]
+      - name: company_name
+        description: Most frequent raw spelling of the canonical name.
+        data_tests: [unique, not_null]
+unit_tests:
+  - name: dim_company_folds_case_spacing_and_aliases
+    model: dim_company
+    given:
+      - input: ref('stg_complaints')
+        rows:
+          - {company: "Acme Bank, N.A."}
+          - {company: "ACME BANK, N.A."}
+          - {company: "ACME BANK, N.A."}
+          - {company: "ACME  BANK,  N.A. "}
+          - {company: "ACME BANK, NATIONAL ASSOCIATION"}
+          - {company: "Other Co LLC"}
+      - input: ref('company_aliases')
+        rows:
+          - {alias_name: "ACME BANK, NATIONAL ASSOCIATION", canonical_name: "ACME BANK, N.A."}
+    expect:
+      rows:
+        - {company_key: "ACME BANK, N.A.", company_name: "ACME BANK, N.A.", n_raw_names: 4, n_complaints: 5}
+        - {company_key: "OTHER CO LLC", company_name: "Other Co LLC", n_raw_names: 1, n_complaints: 1}

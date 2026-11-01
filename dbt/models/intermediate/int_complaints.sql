@@ -1,6 +1,7 @@
 -- CLEANER Engineer: categories mapped across the 2017 and 2023 label revisions (seeds).
 -- product_family: an exact (product, sub_product) row wins over the product's '*' default.
 -- credit_card_issue: the current (2023+) credit card issue list, for credit card rows only.
+-- company_key: canonical company (dim_company), via the same key and alias seed.
 with s as (select * from {{ ref('stg_complaints') }})
 
 select
@@ -9,7 +10,10 @@ select
     case
         when coalesce(exact.product_family, dflt.product_family) = 'credit_card'
             then cc.canonical_issue
-    end as credit_card_issue
+    end as credit_card_issue,
+    coalesce(
+        {{ company_key('al.canonical_name') }}, {{ company_key('s.company') }}
+    ) as company_key
 from s
 left join {{ ref('product_family_map') }} as exact
     on s.product = exact.product and s.sub_product = exact.sub_product
@@ -17,3 +21,5 @@ left join {{ ref('product_family_map') }} as dflt
     on s.product = dflt.product and dflt.sub_product = '*'
 left join {{ ref('credit_card_issue_map') }} as cc
     on s.product = cc.product and s.issue = cc.issue
+left join {{ ref('company_aliases') }} as al
+    on {{ company_key('s.company') }} = {{ company_key('al.alias_name') }}

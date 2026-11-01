@@ -79,10 +79,20 @@ def test_state_codes_are_known_and_null_is_kept(eras_warehouse):
 )
 def test_rare_error_nulls_have_a_cap_that_fails_the_build(eras_warehouse, var, column):
     """The fixture has 6 null issues and 5 null statuses: under the real caps, over a cap of 1."""
-    run_cli("dbt", ["test", "--select", "stg_complaints"], eras_warehouse)
+    run_cli(
+        "dbt", ["test", "--select", "stg_complaints", "--exclude", "tag:full_data"], eras_warehouse
+    )
     with pytest.raises(RuntimeError, match=f"null_count_at_most_stg_complaints_{column}"):
         run_cli(
             "dbt",
-            ["test", "--select", "stg_complaints", "--vars", f"{{{var}: 1}}"],
+            [
+                "test",
+                "--select",
+                "stg_complaints",
+                "--exclude",
+                "tag:full_data",
+                "--vars",
+                f"{{{var}: 1}}",
+            ],
             eras_warehouse,
         )

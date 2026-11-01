@@ -99,7 +99,8 @@ def build_warehouse(root: Path, csv_path: Path, snapshot_date: str, project_dir:
 
     wh = Warehouse(root, project_dir=project_dir)
     ingest(csv_path, wh.raw_parquet, snapshot_date=snapshot_date, work_dir=root / "work")
-    run_cli("dbt", ["build"], wh)
+    # full_data tests check facts about the real snapshot (e.g. aliases name real companies)
+    run_cli("dbt", ["build", "--exclude", "tag:full_data"], wh)
     return wh
 
 
