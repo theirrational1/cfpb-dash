@@ -64,6 +64,60 @@ semantic_models:
         description: Median days from received to sent to company (the -1 artifact kept).
         agg: median
         expr: forwarding_lag_days
+      # BEGIN GENERATED credit card issue measures (uv run python -m core.issue_share)
+      - name: credit_card_issue_known_complaints
+        description: Credit card complaints with a known issue (null issue excluded).
+        agg: sum
+        expr: "case when credit_card_issue is not null then 1 else 0 end"
+      - name: cc_issue_advertising_and_marketing_including_promotional_offers
+        agg: sum
+        expr: "case when credit_card_issue = 'Advertising and marketing, including promotional offers' then 1 else 0 end"
+      - name: cc_issue_closing_your_account
+        agg: sum
+        expr: "case when credit_card_issue = 'Closing your account' then 1 else 0 end"
+      - name: cc_issue_credit_monitoring_or_identity_theft_protection_services
+        agg: sum
+        expr: "case when credit_card_issue = 'Credit monitoring or identity theft protection services' then 1 else 0 end"
+      - name: cc_issue_fees_or_interest
+        agg: sum
+        expr: "case when credit_card_issue = 'Fees or interest' then 1 else 0 end"
+      - name: cc_issue_fraud_or_identity_theft_pre_2017_label
+        agg: sum
+        expr: "case when credit_card_issue = 'Fraud or identity theft (pre-2017 label)' then 1 else 0 end"
+      - name: cc_issue_getting_a_credit_card
+        agg: sum
+        expr: "case when credit_card_issue = 'Getting a credit card' then 1 else 0 end"
+      - name: cc_issue_improper_use_of_your_report
+        agg: sum
+        expr: "case when credit_card_issue = 'Improper use of your report' then 1 else 0 end"
+      - name: cc_issue_incorrect_information_on_your_report
+        agg: sum
+        expr: "case when credit_card_issue = 'Incorrect information on your report' then 1 else 0 end"
+      - name: cc_issue_other_features_terms_or_problems
+        agg: sum
+        expr: "case when credit_card_issue = 'Other features, terms, or problems' then 1 else 0 end"
+      - name: cc_issue_problem_when_making_payments
+        agg: sum
+        expr: "case when credit_card_issue = 'Problem when making payments' then 1 else 0 end"
+      - name: cc_issue_problem_with_a_company_s_investigation_into_an_existing_problem
+        agg: sum
+        expr: "case when credit_card_issue = 'Problem with a company''s investigation into an existing problem' then 1 else 0 end"
+      - name: cc_issue_problem_with_a_purchase_shown_on_your_statement
+        agg: sum
+        expr: "case when credit_card_issue = 'Problem with a purchase shown on your statement' then 1 else 0 end"
+      - name: cc_issue_problem_with_fraud_alerts_or_security_freezes
+        agg: sum
+        expr: "case when credit_card_issue = 'Problem with fraud alerts or security freezes' then 1 else 0 end"
+      - name: cc_issue_struggling_to_pay_your_bill
+        agg: sum
+        expr: "case when credit_card_issue = 'Struggling to pay your bill' then 1 else 0 end"
+      - name: cc_issue_trouble_using_your_card
+        agg: sum
+        expr: "case when credit_card_issue = 'Trouble using your card' then 1 else 0 end"
+      - name: cc_issue_unable_to_get_your_credit_report_or_credit_score
+        agg: sum
+        expr: "case when credit_card_issue = 'Unable to get your credit report or credit score' then 1 else 0 end"
+      # END GENERATED credit card issue measures
 
 metrics:
   - name: complaint_count

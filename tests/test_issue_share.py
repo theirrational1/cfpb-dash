@@ -6,11 +6,20 @@ import duckdb
 import pytest
 
 from agent.tools.query_metric import query_metric
-from core.issue_share import OUT, canonical_issues, render, slug
+from core.issue_share import (
+    COMPLAINTS_YML,
+    OUT,
+    canonical_issues,
+    render,
+    render_complaints_yml,
+    slug,
+)
 
 
 def test_generated_yaml_is_current_with_the_seed():
     assert OUT.read_text() == render(), "run: uv run python -m core.issue_share"
+    current = COMPLAINTS_YML.read_text()
+    assert render_complaints_yml(current) == current, "run: uv run python -m core.issue_share"
     assert len(canonical_issues()) == 16  # 15 current + the legacy pre-2017 fraud value
 
 

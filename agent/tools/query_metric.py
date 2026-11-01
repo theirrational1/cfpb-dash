@@ -28,6 +28,8 @@ from core.warehouse import Warehouse, run_cli
 logger = logging.getLogger(__name__)
 
 ISO_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+# every catalog dimension is reachable from it; mf cannot list values for offset metrics
+BASE_METRIC = "complaint_count"
 
 
 @dataclass(frozen=True)
@@ -266,7 +268,7 @@ def query_metric(
     grain = _validate(load_catalog(warehouse), list(metrics), group_by, filters, start, end)
     snapshot = read_snapshot_stamp(warehouse)
     _check_coverage(start, end, grain, snapshot)
-    _check_filter_values(filters, metrics[0], warehouse, snapshot["built_at"])
+    _check_filter_values(filters, BASE_METRIC, warehouse, snapshot["built_at"])
 
     args = ["query", "--metrics", ",".join(metrics)]
     if group_by:
