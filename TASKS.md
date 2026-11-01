@@ -60,7 +60,7 @@ Small, specific tasks to implement `PRD.md`. TDD for every feature. One mileston
 
 **Track B — dbt (CLEANER: Limit, Edit, Audit, Null → staging; Engineer → intermediate)**
 - [x] M2-04 Staging: limit columns, snake_case names, types
-- [ ] M2-05 Null handling per `docs/decisions/nulls.md`, with tests
+- [x] M2-05 Null handling per `docs/decisions/nulls.md`, with tests
 - [ ] M2-11 **(you + agent)** Revise `cleaner` skill v0 → v1 from what M0 profiling and M2-04/05 taught; only then copy it to user-level skills
 - [ ] M2-06 Category mapping across years (seed table) + tests
 - [ ] M2-07 Company dimension + name resolution; match-rate test

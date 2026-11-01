@@ -23,7 +23,12 @@ models:
       - name: sub_product
         data_type: varchar
       - name: issue
+        description: 6 nulls (error); excluded from issue metrics with a counted reason.
         data_type: varchar
+        data_tests:
+          - null_count_at_most:
+              arguments:
+                max_nulls: "{{ var('issue_null_cap') }}"
       - name: sub_issue
         data_type: varchar
       - name: company
@@ -31,16 +36,43 @@ models:
         data_type: varchar
         data_tests: [not_null]
       - name: state
+        description: "Unknown when null (consumer didn't say): kept, shown as 'unknown'."
         data_type: varchar
-      - name: tags
-        data_type: varchar
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('us_state_codes')
+                field: state_code
+      - name: is_older_american
+        data_type: boolean
+        data_tests: [not_null]
+      - name: is_servicemember
+        data_type: boolean
+        data_tests: [not_null]
       - name: submitted_via
         data_type: varchar
         data_tests: [not_null]
       - name: company_response
+        description: 21 nulls (error); excluded from response metrics with a counted reason.
         data_type: varchar
+        data_tests:
+          - null_count_at_most:
+              arguments:
+                max_nulls: "{{ var('company_response_null_cap') }}"
       - name: company_public_response
+        description: >
+          'none_given' = blank on a closed or untimely complaint from 2015 (meaningful blank).
+          Null = pre-2015 (structural), In progress, or status missing (unknown).
         data_type: varchar
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('public_responses')
+                field: public_response
+      - name: public_response_available
+        description: False before 2015-01-01, when the public-response option effectively did not exist.
+        data_type: boolean
+        data_tests: [not_null]
       - name: timely
         description: Raw 'Yes' / 'No' (accepted values tested on the source).
         data_type: boolean

@@ -1,0 +1,22 @@
+seeds:
+  - name: us_state_codes
+    description: >
+      Every value CFPB uses in `State`: 50 states, DC, territories (incl. the spelled-out
+      UNITED STATES MINOR OUTLYING ISLANDS), freely associated states, military codes.
+    columns:
+      - name: state_code
+        data_tests: [unique, not_null]
+      - name: kind
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [state, district, territory, freely_associated_state, military]
+  - name: public_responses
+    description: >
+      Accepted `company_public_response` values (11 CFPB values plus 'none_given'), each with a
+      canonical value: the 2014-16 and 2016+ "chooses not to provide" wordings are one option.
+    columns:
+      - name: public_response
+        data_tests: [unique, not_null]
+      - name: canonical_public_response
+        data_tests: [not_null]

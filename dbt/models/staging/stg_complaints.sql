@@ -1,4 +1,5 @@
 -- CLEANER Limit + Edit + types. zip_code and source_file dropped (docs/decisions/nulls.md).
+-- CLEANER Null: each nullable column follows docs/decisions/nulls.md (tests in the yml).
 -- The model contract (stg_complaints.yml) pins the column list and types.
 select
     cast("Complaint ID" as bigint) as complaint_id,
@@ -10,9 +11,18 @@ select
     "Sub-issue" as sub_issue,
     trim("Company") as company,
     "State" as state,
-    "Tags" as tags,
+    -- tags: meaningful blank (no tag applies) -> explicit booleans; raw values tested on source
+    coalesce("Tags" like '%Older American%', false) as is_older_american,
+    coalesce("Tags" like '%Servicemember%', false) as is_servicemember,
     "Submitted via" as submitted_via,
     "Company response to consumer" as company_response,
-    "Company public response" as company_public_response,
+    -- blank on a closed or untimely complaint from 2015 = the company gave no public response;
+    -- In progress (not yet available), status missing, and pre-2015 (structural) stay null
+    case
+        when "Company public response" is not null then "Company public response"
+        when cast("Date received" as date) >= date '2015-01-01'
+            and "Company response to consumer" <> 'In progress' then 'none_given'
+    end as company_public_response,
+    cast("Date received" as date) >= date '2015-01-01' as public_response_available,
     "Timely response?" = 'Yes' as timely
 from {{ source('raw', 'complaints') }}

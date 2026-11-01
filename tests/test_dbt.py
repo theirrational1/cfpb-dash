@@ -38,10 +38,12 @@ STAGING_COLUMNS = [
     ("sub_issue", "VARCHAR"),
     ("company", "VARCHAR"),
     ("state", "VARCHAR"),
-    ("tags", "VARCHAR"),
+    ("is_older_american", "BOOLEAN"),
+    ("is_servicemember", "BOOLEAN"),
     ("submitted_via", "VARCHAR"),
     ("company_response", "VARCHAR"),
     ("company_public_response", "VARCHAR"),
+    ("public_response_available", "BOOLEAN"),
     ("timely", "BOOLEAN"),
 ]
 

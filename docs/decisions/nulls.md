@@ -1,6 +1,6 @@
-# Null decisions (draft v0, M0-14)
+# Null decisions (v1: enforced in M2-05)
 
-> **Status: decisions reviewed by Saksham 2026-10-31; not yet enforced.** Each entry becomes a dbt test in M2-05 before the staging model ships. Entries marked **✔ decided** were open questions resolved in review.
+> **Status: reviewed by Saksham 2026-10-31; enforced from M2-05.** Each entry names the dbt test that enforces it (in `dbt/models/staging/stg_complaints.yml` and `_sources.yml` unless noted) and `tests/test_nulls.py` checks the rule on real rows of every pattern (`tests/fixtures/complaints_eras.csv`). Entries marked **✔ decided** were open questions resolved in review.
 >
 > Evidence: `docs/profiling/01_overview.md`, `02_company_response.md`, `NOTES.md`. Snapshot `complaints_2026-10-31.csv.zip` (18,823,456 rows).
 
@@ -11,12 +11,12 @@ CLEANER null categories: **meaningful blank** (encode explicitly), **unknown** (
 ### `sub_product` — 235,275 nulls (1.25%) — **structural**
 - **Evidence:** 100% null in products that had no sub-products when filed: `Credit card` before the April 2017 relabel (every credit card complaint 2011–2016), `Credit reporting` (2012–2017), `Payday loan` (2013–2017). From 2018, credit card sub-product is never null.
 - **Decision:** keep null. The M2-06 mapping seed lists the (product label, era) pairs that have no sub-product.
-- **Test:** `sub_product IS NULL` only for product labels in the seed's "no sub-product" list.
+- **Test:** `sub_product IS NULL` only for product labels in the seed's "no sub-product" list. *(Enforced with the M2-06 mapping seed.)*
 
 ### `issue` — 6 nulls (0.00003%) — **error**
 - **Evidence:** six 2024 complaints (five checking/savings, one credit reporting), all closed. Every other complaint has an issue.
 - **Decision:** keep the rows for counts. Exclude them from issue-based metrics and report them as a counted "issue missing" exclusion.
-- **Test:** null count ≤ 10 (error above, so growth gets noticed).
+- **Test:** `null_count_at_most` on `issue`, cap `var('issue_null_cap')` = 10 (error above, so growth gets noticed).
 - **✔ decided:** `issue_share` **excludes** null-issue rows from numerator and denominator, so shares sum to 100%. The 6 rows stay in `complaint_count` and are reported as a counted exclusion.
 
 ### `sub_issue` — 946,495 nulls (5.03%) — **structural**
@@ -30,34 +30,35 @@ CLEANER null categories: **meaningful blank** (encode explicitly), **unknown** (
   - received before 2015-01-01 → structural (null, period flagged);
   - `In progress` → unknown (not yet available; null);
   - closed **or `Untimely response`** from 2015 → meaningful blank, encoded as `'none_given'`. An untimely response is still the company's response and says something about it.
-- **Test:** accepted values (the 11 current values plus `'none_given'`); null only when received before 2015 or `In progress`.
+- **Encoded as:** `company_public_response = 'none_given'`; `public_response_available` = received on or after 2015-01-01. Null also stays for the ~21 status-missing rows (unknown).
+- **Test:** `relationships` to seed `public_responses` (the 11 values plus `'none_given'`; the seed also maps the two "chooses not to provide" wordings to one canonical value for M2-08); `test_nulls.py` checks null only when received before 2015, `In progress`, or status missing.
 - **✔ decided:** a blank on a closed or untimely complaint means "company gave no public response" (`'none_given'`) for `public_response_rate`.
 
 ### `state` — 63,583 nulls (0.34%) — **unknown**
 - **Evidence:** consumer didn't provide it. It peaks at 2.85% in 2018 and is about 0.1–0.3% from 2022. There are also non-state values: `UNITED STATES MINOR OUTLYING ISLANDS` and military codes (`AA`, `AE`, `AP`).
 - **Decision:** keep null. State breakdowns show an "unknown" row with its count, never silently dropped.
-- **Test:** accepted values (US states, DC, territories, military codes); null allowed.
+- **Test:** `relationships` to seed `us_state_codes` (50 states, DC, territories incl. the spelled-out minor outlying islands, freely associated states, military codes); null allowed.
 
 ### `zip_code` — 3,426 nulls (0.02%), plus 139,165 `XXXXX` and ~100 malformed — **unknown / error**
 - **Evidence:** 93.2% are 5 digits, 6.0% are masked to 3 digits + `XX`, 139K are fully masked as `XXXXX`, and about 100 are malformed (`3008-`, `89!01`).
 - **✔ decided: dropped at staging (CLEANER Limit).** No planned metric, dimension or filter uses ZIP. It stays in the raw file, so it can be brought back with a revised decision if a consumer appears.
-- **Test:** staging column list excludes `zip_code` (schema test on the staging model).
+- **Test:** the enforced model contract on `stg_complaints` pins the column list (no `zip_code`).
 
 ### `tags` — 17,993,831 nulls (95.6%) — **meaningful blank**
 - **Evidence:** null means no tag applies. There are three values: `Older American`, `Servicemember`, and the combined `Older American, Servicemember`.
 - **Decision:** split into booleans `is_older_american` and `is_servicemember`, where null → `false` (an explicit encoding, not missing).
-- **Test:** raw accepted values (the three values, or null); the booleans are not null.
+- **Test:** source `accepted_values` on raw `Tags` (the three values, or null); `not_null` on `is_older_american` and `is_servicemember`. The raw `tags` column is not carried past staging.
 
 ### `company_response` — 21 nulls (0.0001%) — **error**
 - **Evidence:** scattered 2018–2024 complaints (credit reporting, debt collection, mortgage); every other complaint has a status.
 - **Decision:** exclude from response-based metrics (`relief_rate`, `timely_response_rate` denominators) with a counted "status missing" exclusion; keep them in `complaint_count`.
-- **Test:** null count ≤ 25 (error above).
+- **Test:** `null_count_at_most` on `company_response`, cap `var('company_response_null_cap')` = 25 (error above).
 
 ## Bulk file: columns with no nulls (enforce `not_null`)
 
-`complaint_id` (also `unique`, integer), `date_received`, `date_sent_to_company` (both parse as dates), `product`, `company`, `submitted_via`, `timely`. These have zero nulls today, so a null is a source change and fails the build.
+`complaint_id` (also `unique`, integer), `date_received`, `date_sent_to_company` (both parse as dates), `product`, `company`, `submitted_via`, `timely`. These have zero nulls today, so a null is a source change and fails the build (`not_null` on each; `unique` on `complaint_id`; `timely` is typed boolean after a source `accepted_values` test on `Yes`/`No`).
 
-- **Related, not a null:** 7,050 complaints have `date_sent_to_company` exactly one day **before** `date_received`. **✔ decided:** `forwarding_lag_days` **keeps −1** as-is. We'll check its effect on the metrics (M3) before deciding anything further; a test pins the count of negative lags so a change is noticed.
+- **Related, not a null:** 7,050 complaints have `date_sent_to_company` exactly one day **before** `date_received`. **✔ decided:** `forwarding_lag_days` **keeps −1** as-is. We'll check its effect on the metrics (M3) before deciding anything further; a test pins the count of negative lags so a change is noticed *(with `forwarding_lag_days` in M2-08)*.
 
 ## Narrative archive
 

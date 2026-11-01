@@ -11,5 +11,10 @@ models:
     marts:
       +materialized: table
 
+vars:
+  # docs/decisions/nulls.md: rare "error" nulls are capped so growth fails the build
+  issue_null_cap: 10
+  company_response_null_cap: 25
+
 flags:
   send_anonymous_usage_stats: false

@@ -12,3 +12,9 @@ sources:
               - accepted_values:
                   arguments:
                     values: ["Yes", "No"]
+          - name: '"Tags"'
+            quote: false
+            data_tests:
+              - accepted_values:
+                  arguments:
+                    values: ["Older American", "Servicemember", "Older American, Servicemember"]
