@@ -1,7 +1,7 @@
 import duckdb
 import pytest
 
-from agent.tools.query_metric import ToolArgumentError, query_metric
+from agent.tools.query_metric import ToolArgumentError, _where, query_metric
 
 COMPANY = "CAPITAL ONE FINANCIAL CORPORATION"
 CO = {"complaint__company": COMPANY}
@@ -57,11 +57,10 @@ def test_inclusive_day_range_matches_sql(warehouse):
     assert result.rows == [{"complaint_count": _sql_count(warehouse, "2026-03-01", "2026-03-31")}]
 
 
-def test_quote_in_filter_value_is_escaped(warehouse):
-    result = query_metric(
-        ["complaint_count"], filters={"complaint__company": "O'Brien Bank"}, warehouse=warehouse
+def test_quote_in_filter_value_is_escaped():
+    assert _where("complaint__company", "O'Brien") == (
+        "{{ Dimension('complaint__company') }} = 'O''Brien'"
     )
-    assert [r["complaint_count"] for r in result.rows] in ([], [None], [0])
 
 
 @pytest.mark.parametrize(
@@ -90,6 +89,15 @@ def test_quote_in_filter_value_is_escaped(warehouse):
         ({"filters": {"complaint__company) OR (1=1": "x"}}, "dimension"),
         ({"filters": {"complaint__state": "CA"}}, "dimension"),
         ({"group_by": ["complaint__zip_code"]}, "group_by"),
+        # review 2 #4: values and periods the data doesn't have used to return a traced 0
+        ({"filters": {"complaint__company": "Citibank"}}, "CITIBANK, N.A."),
+        ({"filters": {"complaint__company": "O'Brien Bank"}}, "not in the data"),
+        ({"time_range": ("2027-01-01", "2027-12-31")}, "outside the data"),
+        ({"time_range": ("2024-12-31", "2025-01-31")}, "outside the data"),
+        (
+            {"group_by": ["metric_time__month"], "time_range": ("2020-01-01", "2020-12-31")},
+            "outside the data",
+        ),
     ],
 )
 def test_rejects_unsafe_or_misleading_arguments(warehouse, kwargs, message):
@@ -156,3 +164,18 @@ def test_empty_result_is_zero_rows_not_a_crash(warehouse):
     )
     assert result.rows == []
     assert result.provenance.columns == ["complaint__company", "complaint_count"]
+
+
+def test_partly_covered_edge_period_is_allowed_and_coverage_is_in_provenance(warehouse):
+    """Data starts 2025-01-02: January 2025 by month is allowed; provenance says what's covered."""
+    result = query_metric(
+        ["complaint_count"],
+        group_by=["metric_time__month"],
+        filters=CO,
+        time_range=("2025-01-01", "2025-01-31"),
+        warehouse=warehouse,
+    )
+    assert [r["complaint_count"] for r in result.rows] == [
+        _sql_count(warehouse, "2025-01-01", "2025-01-31")
+    ]
+    assert result.provenance.data_range == ("2025-01-02", "2026-06-30")

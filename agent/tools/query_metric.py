@@ -3,10 +3,14 @@
 Public tool (AGENTS.md: ask before changing it). Arguments that MetricFlow would silently
 reinterpret are refused with ToolArgumentError rather than answered with a wrong number:
 time filters (use time_range), partial or inverted dates, ranges not aligned to a grouped time
-grain (MetricFlow widens them to the grain), and bare `metric_time`.
+grain (MetricFlow widens them to the grain), bare `metric_time`, filter values the data
+does not contain, and ranges that reach a period with no data (both would return a 0 that
+looks like a real count). Provenance carries the data's date range for coverage caveats.
 """
 
 import csv
+import difflib
+import functools
 import logging
 import re
 import tempfile
@@ -31,6 +35,7 @@ class Provenance:
     group_by: list[str]
     filters: dict[str, str]
     time_range: tuple[str | None, str | None]
+    data_range: tuple[str, str]  # first and last date_received in the warehouse
     columns: list[str]
     snapshot_date: str
     source_sha256: str
@@ -106,7 +111,8 @@ def _validate(
     filters: dict[str, str],
     start: str | None,
     end: str | None,
-) -> None:
+) -> str:
+    """Check names and dates against the semantic layer; return the time grain in effect."""
     unknown = [m for m in metrics if m not in catalog.metrics]
     if unknown or not metrics:
         raise ToolArgumentError(f"unknown metrics {unknown}; available: {sorted(catalog.metrics)}")
@@ -148,6 +154,42 @@ def _validate(
             f"time_range end {end} does not align to the {grain} grain; "
             f"use {_period_end(d1, grain)} or group by a finer grain"
         )
+    return grain
+
+
+def _check_coverage(start: str | None, end: str | None, grain: str, stamp: dict[str, str]) -> None:
+    """Refuse a range reaching a period with no data at all: MetricFlow would answer 0 for it.
+    Edge periods that the data covers partly are allowed; provenance.data_range says how much."""
+    first, last = date.fromisoformat(stamp["data_start"]), date.fromisoformat(stamp["data_end"])
+    lo, hi = _period_start(first, grain), _period_end(last, grain)
+    if (start and date.fromisoformat(start) < lo) or (end and date.fromisoformat(end) > hi):
+        raise ToolArgumentError(
+            f"time_range {start}..{end} is outside the data ({first}..{last}); "
+            f"by {grain}, use dates within {lo}..{hi}"
+        )
+
+
+@functools.cache
+def _dimension_values(warehouse: Warehouse, built_at: str, metric: str, dim: str) -> frozenset:
+    """Distinct values via `mf list dimension-values` (cached per warehouse build)."""
+    out = run_cli(
+        "mf", ["list", "dimension-values", "--metrics", metric, "--dimension", dim], warehouse
+    )
+    return frozenset(line[2:] for line in out.splitlines() if line.startswith("• "))
+
+
+def _check_filter_values(
+    filters: dict[str, str], metric: str, warehouse: Warehouse, built_at: str
+) -> None:
+    for dim, value in filters.items():
+        values = _dimension_values(warehouse, built_at, metric, dim)
+        if value not in values:
+            by_lower = {v.lower(): v for v in values}
+            close = difflib.get_close_matches(value.lower(), list(by_lower), n=3, cutoff=0.5)
+            raise ToolArgumentError(
+                f"filter {dim}={value!r} is not in the data; "
+                f"closest values: {[by_lower[c] for c in close]}"
+            )
 
 
 def _where(dimension: str, value: str) -> str:
@@ -211,7 +253,10 @@ def query_metric(
     group_by = list(group_by or [])
     filters = dict(filters or {})
     start, end = time_range or (None, None)
-    _validate(load_catalog(warehouse), list(metrics), group_by, filters, start, end)
+    grain = _validate(load_catalog(warehouse), list(metrics), group_by, filters, start, end)
+    snapshot = read_snapshot_stamp(warehouse)
+    _check_coverage(start, end, grain, snapshot)
+    _check_filter_values(filters, metrics[0], warehouse, snapshot["built_at"])
 
     args = ["query", "--metrics", ",".join(metrics)]
     if group_by:
@@ -239,12 +284,12 @@ def query_metric(
     rows: list[dict[str, str | int | float | None]] = [
         {k: _number(v) if k in metrics else v for k, v in r.items()} for r in raw
     ]
-    snapshot = read_snapshot_stamp(warehouse)
     provenance = Provenance(
         metrics=list(metrics),
         group_by=group_by,
         filters=filters,
         time_range=(start, end),
+        data_range=(snapshot["data_start"], snapshot["data_end"]),
         columns=columns,
         snapshot_date=snapshot["snapshot_date"],
         source_sha256=snapshot["source_sha256"],
