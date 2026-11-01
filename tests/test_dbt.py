@@ -26,3 +26,11 @@ def test_staging_types_and_limit(warehouse):
     # CLEANER Limit, docs/decisions/nulls.md: ZIP is dropped at staging
     assert "zip_code" not in cols and "ZIP code" not in cols
     assert "source_file" not in cols
+
+
+def test_mf_env_selects_the_readonly_target():
+    from core.warehouse import REPO_ROOT
+
+    lines = (REPO_ROOT / "mf.env").read_text().splitlines()
+    assert "CFPB_DBT_TARGET=readonly" in lines
+    assert not any(line.startswith("CFPB_DBT_TARGET") for line in (REPO_ROOT / "dbt.env").open())

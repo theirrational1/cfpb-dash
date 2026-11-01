@@ -30,8 +30,8 @@ uv run pytest -m data                     # recompute every checksum in data/raw
 uv run python -m ingestion.bulk --source data/raw/bulk/<file>.csv.zip   # raw Parquet + snapshot.json
 uv run python -m ingestion.incremental    # daily API pull
 uv run --env-file dbt.env dbt build       # models + tests (run from repo root; dbt.env sets paths)
-uv run --env-file dbt.env mf validate-configs
-uv run --env-file dbt.env mf query --metrics <m> --group-by <d>
+uv run --env-file dbt.env --env-file mf.env mf validate-configs   # mf.env: read-only target
+uv run --env-file dbt.env --env-file mf.env mf query --metrics <m> --group-by <d>
 uv run pytest
 uv run ruff check . && uv run ruff format --check .
 uv run ty check

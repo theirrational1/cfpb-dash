@@ -7,7 +7,7 @@ import pytest
 from agent.adapters.base import ChatResult, ToolCall, Usage
 from agent.adapters.cache import JsonCache
 from agent.adapters.fake import FakeAdapter
-from agent.adapters.gateway import Budget, BudgetExceeded, Gateway
+from agent.adapters.gateway import Budget, BudgetExceeded, Gateway, estimate_input_tokens
 from agent.adapters.ollama import OllamaAdapter
 from agent.adapters.pricing import UnknownModelPrice, cost_usd
 from agent.adapters.usage import UsageLog
@@ -158,3 +158,13 @@ def test_ollama_adapter_returns_malformed_arguments_raw():
     assert result.usage == Usage(12, 3)
     with pytest.raises(json.JSONDecodeError):
         _ = result.tool_calls[0].arguments
+
+
+def test_input_estimate_has_headroom_for_digit_heavy_json():
+    """Review 2 #5: tool results full of numbers and dates tokenize at well under 3 chars/token."""
+    rows = [
+        {"metric_time__day": f"2026-03-{d:02d}", "complaint_count": 1000 + d} for d in range(28)
+    ]
+    messages = [{"role": "tool", "content": json.dumps({"rows": rows})}]
+    chars = len(json.dumps([messages, []]))
+    assert estimate_input_tokens(messages, []) >= chars / 1.5

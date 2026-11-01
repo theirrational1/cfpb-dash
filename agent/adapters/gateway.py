@@ -16,7 +16,10 @@ from agent.adapters.usage import UsageLog
 
 logger = logging.getLogger(__name__)
 
-CHARS_PER_TOKEN_LOW = 3  # conservative (real is ~4): over-estimates input tokens
+CHARS_PER_TOKEN_LOW = 3  # typical English is ~4
+# JSON full of digits and dates can tokenize near 1.5 chars/token; until paid models bring a
+# real token counter (M5), double the estimate so the budget check stays an upper bound.
+INPUT_SAFETY_FACTOR = 2
 
 
 class BudgetExceeded(RuntimeError):
@@ -37,7 +40,8 @@ class Budget:
 
 
 def estimate_input_tokens(messages: list[Message], tools: list[ToolSpec]) -> int:
-    return len(json.dumps([messages, tools])) // CHARS_PER_TOKEN_LOW + 1
+    chars = len(json.dumps([messages, tools]))
+    return chars * INPUT_SAFETY_FACTOR // CHARS_PER_TOKEN_LOW + 1
 
 
 def _from_dict(d: dict) -> ChatResult:
