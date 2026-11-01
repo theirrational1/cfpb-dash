@@ -11,6 +11,10 @@ from agent.tools.query_metric import query_metric
 
 RESPONDED = "company_response IS NOT NULL AND company_response <> 'In progress'"
 OPT_OUT = "Company chooses not to provide a public response"
+PR_KNOWN = (
+    "public_response IS NOT NULL AND date_received >= DATE '2015-01-01'"
+    " AND company_response IS NOT NULL"
+)
 
 # metric -> SQL aggregate over fct_complaints (the reference definition)
 REFERENCE = {
@@ -23,9 +27,10 @@ REFERENCE = {
         f"sum(CASE WHEN timely AND {RESPONDED} THEN 1 ELSE 0 END)"
         f" / nullif(sum(CASE WHEN {RESPONDED} THEN 1 ELSE 0 END), 0)"
     ),
+    # written from the stated definition, not the measure: from 2015, status recorded
     "public_response_rate": (
-        f"sum(CASE WHEN public_response NOT IN ('none_given', '{OPT_OUT}') THEN 1 ELSE 0 END)"
-        " / nullif(count(public_response), 0)"
+        f"sum(CASE WHEN {PR_KNOWN} AND public_response NOT IN ('none_given', '{OPT_OUT}')"
+        f" THEN 1 ELSE 0 END) / nullif(sum(CASE WHEN {PR_KNOWN} THEN 1 ELSE 0 END), 0)"
     ),
     "forwarding_lag_days": "median(forwarding_lag_days)",
 }

@@ -26,7 +26,7 @@ CLEANER null categories: **meaningful blank** (encode explicitly), **unknown** (
 - **Test:** no not-null test. M2-06 checks the mapping seed's coverage of (product, issue, sub-issue) combinations.
 
 ### `company_public_response` — 8,435,956 nulls (44.8%) — **structural before 2015; then meaningful blank or not-yet-available**
-- **Evidence:** 100% null 2011–2014 (the option effectively starts in 2015). From 2016, about 41–47% null among closed complaints and 100% null for `In progress` and `Untimely response`. Separately, the explicit value "Company … chooses not to provide a public response" exists, so a null is *not* the same as an explicit opt-out.
+- **Evidence:** null 2011–2014 apart from 144 complaints (2012-04..2014-12) that carry a value (the option effectively starts in 2015); those 144 and 19 status-missing complaints with a value are kept in staging but excluded from `public_response_rate` (review 4). From 2016, about 41–47% null among closed complaints and 100% null for `In progress` and `Untimely response`. Separately, the explicit value "Company … chooses not to provide a public response" exists, so a null is *not* the same as an explicit opt-out.
 - **Decision:**
   - received before 2015-01-01 → structural (null, period flagged);
   - `In progress` → unknown (not yet available; null);

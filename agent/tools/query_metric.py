@@ -322,8 +322,10 @@ def query_metric(
         else:
             raise RuntimeError(f"mf query wrote no CSV and reported no empty result:\n{stdout}")
 
+    # mf's CSV cannot tell null from '': an empty dimension value is null (e.g. state unknown,
+    # no tier below the threshold); no dimension has a real empty value (staging trims names)
     rows: list[dict[str, str | int | float | None]] = [
-        {k: _number(v) if k in metrics else v for k, v in r.items()} for r in raw
+        {k: _number(v) if k in metrics else (v or None) for k, v in r.items()} for r in raw
     ]
     provenance = Provenance(
         metrics=list(metrics),

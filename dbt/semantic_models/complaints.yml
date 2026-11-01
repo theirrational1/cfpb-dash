@@ -25,6 +25,9 @@ semantic_models:
         type: categorical
       - name: product_family
         type: categorical
+      - name: state
+        type: categorical
+        description: Consumer's state; null = not provided (shown as unknown, nulls.md).
     measures:
       - name: complaints
         description: Count of complaints.
@@ -53,13 +56,16 @@ semantic_models:
         agg: sum
         expr: "case when timely and company_response is not null and company_response <> 'In progress' then 1 else 0 end"
       - name: public_response_known_complaints
-        description: Public response known (from 2015; closed or untimely).
+        description: >-
+          Public response known, received from 2015 (when the option existed) and with a
+          recorded status. 144 pre-2015 and 19 status-missing complaints that carry a public
+          response are excluded, as the definition states (review 4).
         agg: sum
-        expr: "case when public_response is not null then 1 else 0 end"
+        expr: "case when public_response is not null and public_response_available and company_response is not null then 1 else 0 end"
       - name: substantive_public_response_complaints
         description: A public response other than none given or the boilerplate opt-out.
         agg: sum
-        expr: "case when public_response is not null and public_response not in ('none_given', 'Company chooses not to provide a public response') then 1 else 0 end"
+        expr: "case when public_response is not null and public_response_available and company_response is not null and public_response not in ('none_given', 'Company chooses not to provide a public response') then 1 else 0 end"
       - name: forwarding_lag_median
         description: Median days from received to sent to company (the -1 artifact kept).
         agg: median

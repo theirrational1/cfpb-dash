@@ -2,6 +2,7 @@
 the versioned params files."""
 
 import duckdb
+import pytest
 import yaml
 
 from agent.tools.query_metric import query_metric
@@ -73,3 +74,93 @@ def test_metrics_filter_by_peer_status_and_tier(warehouse):
     tiers = query_metric(["complaint_count"], group_by=["company_product__volume_tier"],
                          warehouse=warehouse).rows  # fmt: skip
     assert {r["company_product__volume_tier"] for r in tiers} == {"high", "middle", "low"}
+
+
+SYNCHRONY, CITI = "SYNCHRONY FINANCIAL", "CITIBANK, N.A."
+
+
+@pytest.fixture(scope="module")
+def mixed_warehouse(tmp_path_factory, fixture_csv, dbt_project):
+    """Review 4 #5: eligible and below-threshold companies in one family, and a credit card
+    complaint with no issue. Derived from the committed sample: Synchrony keeps only 50
+    complaints in the trailing window (2025-10..2026-09); one Citibank issue is blanked."""
+    import csv
+
+    from tests.conftest import build_warehouse
+
+    with fixture_csv.open(newline="") as f:
+        rows = list(csv.reader(f))
+    header, body = rows[0], rows[1:]
+    company, received, issue = (header.index(c) for c in ("Company", "Date received", "Issue"))
+    kept, synchrony_in_window = [], 0
+    for r in body:
+        if r[company] == SYNCHRONY and r[received] >= "2025-10-01":
+            synchrony_in_window += 1
+            if synchrony_in_window > 50:
+                continue
+        kept.append(r)
+    first_citi = next(r for r in kept if r[company] == CITI)
+    first_citi[issue] = ""
+    root = tmp_path_factory.mktemp("mixed")
+    path = root / "mixed.csv"
+    with path.open("w", newline="") as f:
+        csv.writer(f).writerows([header, *kept])
+    return build_warehouse(root / "wh", path, "2026-10-31", dbt_project)
+
+
+def _sql(wh, sql, params=()):
+    return duckdb.connect(str(wh.duckdb_path), read_only=True).execute(sql, list(params)).fetchall()
+
+
+def test_the_peer_filter_actually_filters(mixed_warehouse):
+    status = dict(_sql(mixed_warehouse, """SELECT d.company_name, p.peer_status
+        FROM dim_company_product p JOIN dim_company d USING (company_key)"""))  # fmt: skip
+    assert status == {SYNCHRONY: "below_threshold", CITI: "eligible",
+                      "CAPITAL ONE FINANCIAL CORPORATION": "eligible"}  # fmt: skip
+    eligible = query_metric(["relief_rate"], group_by=["complaint__company"],
+                            filters={"company_product__peer_status": "eligible"},
+                            warehouse=mixed_warehouse).rows  # fmt: skip
+    everyone = query_metric(["relief_rate"], group_by=["complaint__company"],
+                            warehouse=mixed_warehouse).rows  # fmt: skip
+    assert {r["complaint__company"] for r in eligible} == {
+        CITI,
+        "CAPITAL ONE FINANCIAL CORPORATION",
+    }
+    assert len(everyone) == 3
+
+
+def test_per_tier_values_match_reference_sql(mixed_warehouse):
+    """Two eligible companies -> tiers high and middle only; below-threshold has no tier."""
+    got = {r["company_product__volume_tier"]: r["complaint_count"] for r in query_metric(
+        ["complaint_count"], group_by=["company_product__volume_tier"],
+        warehouse=mixed_warehouse).rows}  # fmt: skip
+    expected = dict(_sql(mixed_warehouse, """SELECT p.volume_tier, count(*) FROM fct_complaints f
+        JOIN dim_company_product p USING (company_product_key) GROUP BY 1"""))  # fmt: skip
+    assert got == expected and set(got) == {"high", "middle", None}
+
+
+def test_issue_share_excludes_the_null_issue(mixed_warehouse):
+    """Review 4 #6: the null-issue path was never exercised."""
+    from core.issue_share import canonical_issues, slug
+
+    metrics = [f"issue_share_{slug(i)}" for i in canonical_issues()]
+    [row] = query_metric(metrics, filters={"complaint__company": CITI},
+                         warehouse=mixed_warehouse).rows  # fmt: skip
+    [(known, total)] = _sql(
+        mixed_warehouse,
+        """SELECT count(credit_card_issue), count(*)
+        FROM fct_complaints WHERE company = ? AND product_family = 'credit_card'""",
+        [CITI],
+    )
+    assert known == total - 1
+    for issue, metric in zip(canonical_issues(), metrics, strict=True):
+        [(n,)] = _sql(
+            mixed_warehouse,
+            """SELECT count(*) FROM fct_complaints
+            WHERE company = ? AND credit_card_issue = ?""",
+            [CITI, issue],
+        )
+        assert abs(float(row[metric] or 0) - n / known) < 1e-9, issue
+    [(missing,)] = _sql(mixed_warehouse, "SELECT value FROM data_coverage "
+                        "WHERE item = 'issue_missing' AND scope = 'credit_card'")  # fmt: skip
+    assert missing == "1"

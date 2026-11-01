@@ -45,7 +45,7 @@ counts as (
     from f
     union all
     select 'status_missing', 'all', count(*) filter (where company_response is null),
-           'company_response missing (error): excluded from response-based rates' from f
+           'company_response missing (error): excluded from relief, timeliness and public response rates' from f
     union all
     select 'relief_outcome_unknown', 'all', count(*) filter (where company_response = 'Closed'),
            'Bare Closed (2011-17): outcome not recorded, excluded from relief rates' from f
@@ -56,11 +56,16 @@ counts as (
     from f
     union all
     select 'issue_missing', 'all', count(*) filter (where issue is null),
-           'Null issue (error): excluded from issue shares' from f
+           'Null issue (error): no issue; only credit card has issue metrics' from f
+    union all
+    select 'issue_missing', 'credit_card',
+           count(*) filter (where issue is null and product_family = 'credit_card'),
+           'Credit card complaints with no issue: excluded from issue shares' from f
     union all
     select 'public_response_before_2015', 'all',
            count(*) filter (where not public_response_available),
-           'Before the public-response option: excluded from public response rate' from f
+           'Received before 2015, when the public-response option did not exist: excluded from public response rate (144 carry a response anyway)'
+    from f
     union all
     select 'sub_product_unknown', 'all', count(*) filter (where sub_product is null),
            'No sub-product (structural eras plus a few stray errors; nulls.md)' from f
@@ -90,7 +95,9 @@ caveats as (
         ('caveat_counts_not_rates', 'all', null,
          'No size denominators: complaint counts are not rates and do not measure company size'),
         ('caveat_consumer_labels', 'all', null,
-         'Product and issue labels are chosen by consumers and were revised in 2017 and 2023')
+         'Product and issue labels are chosen by consumers and were revised in 2017 and 2023'),
+        ('caveat_peer_tiers', 'all', null,
+         'Peer status and complaint-volume tiers are as of the snapshot trailing 12 full months and are applied to every period queried; a tier ranks complaint volume, not company size')
     ) as t(item, scope, value, note)
 )
 

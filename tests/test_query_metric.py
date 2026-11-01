@@ -87,7 +87,7 @@ def test_quote_in_filter_value_is_escaped():
         # names: template injection, bad syntax, unknown to the semantic layer
         ({"filters": {"complaint__company": "{{ Dimension('x') }}"}}, "braces"),
         ({"filters": {"complaint__company) OR (1=1": "x"}}, "dimension"),
-        ({"filters": {"complaint__state": "CA"}}, "dimension"),
+        ({"filters": {"complaint__zip_code": "94110"}}, "dimension"),  # ZIP dropped at staging
         ({"group_by": ["complaint__zip_code"]}, "group_by"),
         # review 2 #4: values and periods the data doesn't have used to return a traced 0
         ({"filters": {"complaint__company": "Citibank"}}, "CITIBANK, N.A."),
@@ -198,3 +198,11 @@ def test_partly_covered_edge_period_is_allowed_and_coverage_is_in_provenance(war
 def test_period_metrics_need_their_time_grain(warehouse, metric, group_by):
     with pytest.raises(ToolArgumentError, match="defined over time"):
         query_metric([metric], group_by=group_by, warehouse=warehouse)
+
+
+def test_a_null_dimension_value_comes_back_as_none(eras_warehouse):
+    """mf's CSV writes null as ''; the eras fixture has complaints with no state."""
+    rows = query_metric(["complaint_count"], group_by=["complaint__state"],
+                        warehouse=eras_warehouse).rows  # fmt: skip
+    assert None in {r["complaint__state"] for r in rows}
+    assert "" not in {r["complaint__state"] for r in rows}

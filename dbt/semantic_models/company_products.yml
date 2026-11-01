@@ -11,7 +11,11 @@ semantic_models:
     dimensions:
       - name: peer_status
         type: categorical
-        description: eligible (>= the volume threshold, trailing 12 full months) or below_threshold.
+        description: >-
+          eligible (>= the volume threshold) or below_threshold, as of the snapshot's trailing
+          12 full months; applied to every period queried.
       - name: volume_tier
         type: categorical
-        description: Complaint-volume tier (high / middle / low) among eligible peers; not company size.
+        description: >-
+          Complaint-volume tier (high / middle / low) among eligible peers, as of the snapshot's
+          trailing 12 full months and applied to every period queried; not company size.
