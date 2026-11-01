@@ -1,4 +1,6 @@
-# Governed metrics: defined here only (AGENTS.md). Definitions follow PRD §7.
+# Governed metrics: defined here only (AGENTS.md). Definitions follow PRD §7 and the M3 plan
+# (decision log). Reference SQL for each: tests/test_metric_reference.py.
+# Rates are ratios of 0/1 sums; their denominators state what is excluded (counted in coverage).
 semantic_models:
   - name: complaints
     description: One row per complaint (fct_complaints).
@@ -18,11 +20,47 @@ semantic_models:
         type: categorical
       - name: product
         type: categorical
+      - name: product_family
+        type: categorical
     measures:
       - name: complaints
         description: Count of complaints.
         agg: count
         expr: complaint_id
+      - name: relief_complaints
+        description: Closed with relief (monetary, non-monetary, or 2011-12 'with relief').
+        agg: sum
+        expr: "case when is_relief then 1 else 0 end"
+      - name: relief_known_complaints
+        description: Closed with a recorded outcome (excludes open, bare 'Closed', missing).
+        agg: sum
+        expr: "case when is_relief is not null then 1 else 0 end"
+      - name: monetary_relief_complaints
+        agg: sum
+        expr: "case when is_monetary_relief then 1 else 0 end"
+      - name: monetary_known_complaints
+        description: Closed with a recorded relief kind (also excludes 2011-12 'with relief').
+        agg: sum
+        expr: "case when is_monetary_relief is not null then 1 else 0 end"
+      - name: responded_complaints
+        description: Company responded (status known and not In progress; untimely counts).
+        agg: sum
+        expr: "case when company_response is not null and company_response <> 'In progress' then 1 else 0 end"
+      - name: timely_responded_complaints
+        agg: sum
+        expr: "case when timely and company_response is not null and company_response <> 'In progress' then 1 else 0 end"
+      - name: public_response_known_complaints
+        description: Public response known (from 2015; closed or untimely).
+        agg: sum
+        expr: "case when public_response is not null then 1 else 0 end"
+      - name: substantive_public_response_complaints
+        description: A public response other than none given or the boilerplate opt-out.
+        agg: sum
+        expr: "case when public_response is not null and public_response not in ('none_given', 'Company chooses not to provide a public response') then 1 else 0 end"
+      - name: forwarding_lag_median
+        description: Median days from received to sent to company (the -1 artifact kept).
+        agg: median
+        expr: forwarding_lag_days
 
 metrics:
   - name: complaint_count
@@ -36,3 +74,51 @@ metrics:
         name: complaints
         fill_nulls_with: 0
         join_to_timespine: true
+
+  # numerators and denominators: governed counts in their own right
+  - {name: relief_count, label: Closed with relief, type: simple, type_params: {measure: relief_complaints}}
+  - {name: relief_known_count, label: Closed with a recorded outcome, type: simple, type_params: {measure: relief_known_complaints}}
+  - {name: monetary_relief_count, label: Closed with monetary relief, type: simple, type_params: {measure: monetary_relief_complaints}}
+  - {name: monetary_known_count, label: Closed with a recorded relief kind, type: simple, type_params: {measure: monetary_known_complaints}}
+  - {name: responded_count, label: Complaints with a company response, type: simple, type_params: {measure: responded_complaints}}
+  - {name: timely_responded_count, label: Timely company responses, type: simple, type_params: {measure: timely_responded_complaints}}
+  - {name: public_response_known_count, label: Complaints with a known public response, type: simple, type_params: {measure: public_response_known_complaints}}
+  - {name: substantive_public_response_count, label: Substantive public responses, type: simple, type_params: {measure: substantive_public_response_complaints}}
+
+  - name: relief_rate
+    label: Relief rate
+    description: >-
+      Closed with monetary or non-monetary relief / closed complaints with a recorded outcome.
+      Excludes open complaints (In progress, Untimely), bare 'Closed' (2011-17, outcome not
+      recorded) and status missing.
+    type: ratio
+    type_params: {numerator: relief_count, denominator: relief_known_count}
+  - name: monetary_relief_rate
+    label: Monetary relief rate
+    description: >-
+      Closed with monetary relief / closed complaints with a recorded relief kind. Also excludes
+      2011-12 'Closed with relief' (kind not recorded), never guessed.
+    type: ratio
+    type_params: {numerator: monetary_relief_count, denominator: monetary_known_count}
+  - name: timely_response_rate
+    label: Timely response rate
+    description: >-
+      Timely responses / complaints the company responded to (Untimely response counts as a
+      response). Excludes In progress (always marked timely before a response) and status missing.
+    type: ratio
+    type_params: {numerator: timely_responded_count, denominator: responded_count}
+  - name: public_response_rate
+    label: Substantive public response rate
+    description: >-
+      Complaints with a substantive company public response / complaints whose public response
+      is known. 'None given' and the boilerplate 'chooses not to provide a public response' are
+      not substantive. Excludes pre-2015 (option did not exist), In progress, status missing.
+    type: ratio
+    type_params: {numerator: substantive_public_response_count, denominator: public_response_known_count}
+  - name: forwarding_lag_days
+    label: Median forwarding lag (days)
+    description: >-
+      Median of date sent to company minus date received. The -1 day artifact (7,050 complaints,
+      likely a timezone effect) is kept as recorded (nulls.md).
+    type: simple
+    type_params: {measure: forwarding_lag_median}
