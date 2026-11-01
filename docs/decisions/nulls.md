@@ -8,10 +8,11 @@ CLEANER null categories: **meaningful blank** (encode explicitly), **unknown** (
 
 ## Bulk file: columns that contain nulls
 
-### `sub_product` — 235,275 nulls (1.25%) — **structural**
+### `sub_product` — 235,275 nulls (1.25%) — **structural**, plus 136 **error**
 - **Evidence:** 100% null in products that had no sub-products when filed: `Credit card` before the April 2017 relabel (every credit card complaint 2011–2016), `Credit reporting` (2012–2017), `Payday loan` (2013–2017). From 2018, credit card sub-product is never null.
 - **Decision:** keep null. The M2-06 mapping seed lists the (product label, era) pairs that have no sub-product.
-- **Test:** `sub_product IS NULL` only for product labels in the seed's "no sub-product" list. *(Enforced with the M2-06 mapping seed.)*
+- **Error (136 rows, recorded in review 3):** nulls outside those eras, where the label normally has sub-products: 99 `Checking or savings account` (2017-05..2024-05), 34 `Payday loan, title loan, or personal loan` (2017-08..2022-07), 3 `Credit card or prepaid card` (2021-03..04). Keep the rows. They still get a product family (the label's `*` default in `product_family_map`); sub-product breakdowns show them as an "unknown" sub-product with their count, never silently dropped.
+- **Test:** `assert_sub_product_nulls_are_structural`: nulls are allowed in the eras listed in seed `no_sub_product_eras`; stray nulls elsewhere are capped at `var('sub_product_stray_null_cap')` = 150 (136 today), so growth fails the build.
 
 ### `issue` — 6 nulls (0.00003%) — **error**
 - **Evidence:** six 2024 complaints (five checking/savings, one credit reporting), all closed. Every other complaint has an issue.
