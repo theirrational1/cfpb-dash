@@ -11,6 +11,8 @@ from pathlib import Path
 
 import duckdb
 
+from ingestion.schema_check import check_fields
+
 logger = logging.getLogger(__name__)
 
 BULK_COLUMNS = [
@@ -61,8 +63,7 @@ def extract_single_member(zip_path: Path, work_dir: Path) -> Path:
 def csv_to_parquet(csv_path: Path, expected_columns: list[str], out: Path, source_name: str) -> int:
     """Write `out` with every CSV column as text plus `source_file`. Returns the row count."""
     header, expected_rows = count_csv_records(csv_path)
-    if header != expected_columns:
-        raise ValueError(f"{source_name}: header {header} != expected {expected_columns}")
+    check_fields(header, expected_columns, source_name)
 
     con = duckdb.connect()
     con.execute(
