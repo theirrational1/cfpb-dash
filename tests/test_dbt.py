@@ -83,3 +83,16 @@ def test_mf_env_selects_the_readonly_target():
     lines = (REPO_ROOT / "mf.env").read_text().splitlines()
     assert "CFPB_DBT_TARGET=readonly" in lines
     assert not any(line.startswith("CFPB_DBT_TARGET") for line in (REPO_ROOT / "dbt.env").open())
+
+
+def test_fact_restricts_to_one_row_per_staged_complaint_with_canonical_company(eras_warehouse):
+    con = _con(eras_warehouse)
+    assert con.execute(
+        """SELECT (SELECT count(*) FROM fct_complaints), (SELECT count(*) FROM stg_complaints),
+                  (SELECT count(*) FROM fct_complaints f JOIN dim_company d USING (company_key)
+                   WHERE f.company <> d.company_name)"""
+    ).fetchone() == (478, 478, 0)
+    cols = [r[0] for r in con.execute("DESCRIBE fct_complaints").fetchall()]
+    for col in ("product_family", "credit_card_issue", "company_key", "is_relief",
+                "forwarding_lag_days", "public_response"):  # fmt: skip
+        assert col in cols

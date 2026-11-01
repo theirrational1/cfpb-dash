@@ -65,7 +65,7 @@ Small, specific tasks to implement `PRD.md`. TDD for every feature. One mileston
 - [x] M2-06 Category mapping across years (seed table) + tests
 - [x] M2-07 Company dimension + name resolution; match-rate test
 - [x] M2-08 Intermediate: forwarding lag, relief flag, month keys
-- [ ] M2-09 Complaint fact; tests: unique id, not-null, accepted values, row count vs raw
+- [x] M2-09 Complaint fact; tests: unique id, not-null, accepted values, row count vs raw
 
 **Then**
 - [ ] M2-10 Snapshot job: freeze a dated DuckDB copy for evals

@@ -1,9 +1,43 @@
 models:
   - name: fct_complaints
-    description: Complaint fact. Grain is one complaint.
+    description: >
+      Complaint fact. Grain: one complaint, all products (row count reconciles with staging:
+      assert_fact_rows_match_staging). company = canonical display name from dim_company.
     columns:
       - name: complaint_id
         data_tests: [unique, not_null]
+      - name: date_received
+        data_tests: [not_null]
+      - name: received_month
+        data_tests: [not_null]
+      - name: product_family
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('product_families')
+                field: product_family
+      - name: company_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_company')
+                field: company_key
+      - name: company
+        data_tests: [not_null]
+      - name: is_closed
+        data_tests: [not_null]
+      - name: timely
+        data_tests: [not_null]
+      - name: forwarding_lag_days
+        data_tests: [not_null]
+      - name: public_response_available
+        data_tests: [not_null]
+      - name: is_older_american
+        data_tests: [not_null]
+      - name: is_servicemember
+        data_tests: [not_null]
   - name: metricflow_time_spine
     description: Daily time spine required by MetricFlow.
     time_spine:
