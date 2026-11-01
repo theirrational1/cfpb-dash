@@ -78,38 +78,61 @@ def test_metric_matches_reference_sql(wh, metric, grouping):
     assert not bad, f"{metric}/{grouping}: {list(bad.items())[:5]}"
 
 
-GROWTH = {"complaint_growth_mom": 1, "complaint_growth_yoy": 12}  # offset in months
+# metric -> (grain, months back): growth compares like for like (period to date)
+GROWTH = {
+    "complaint_growth_mom": ("month", 1),
+    "complaint_growth_yoy": ("month", 12),
+    "complaint_growth_yoy_quarterly": ("quarter", 12),
+    "complaint_growth_yoy_annual": ("year", 12),
+}
 
 
 @pytest.mark.parametrize(("dims", "sql_dim"), [([], None), (["complaint__product_family"],
                                                             "product_family")])  # fmt: skip
 @pytest.mark.parametrize("metric", sorted(GROWTH))
-def test_growth_matches_reference_sql(wh, metric, dims, sql_dim):
-    """Monthly counts are zero-filled over the data's months; growth is null after a 0."""
-    governed = query_metric([metric], group_by=[*dims, "metric_time__month"], warehouse=wh)
-    got = {_key(r, [*dims, "metric_time__month"]): r[metric] for r in governed.rows}
+def test_growth_compares_the_same_days_and_matches_reference_sql(wh, metric, dims, sql_dim):
+    """Review 4 #3: each period, through its last day with data, against the same days
+    `months` earlier. Every period with data must be returned (exact key set)."""
+    grain, months = GROWTH[metric]
+    col = f"metric_time__{grain}"
+    governed = query_metric([metric], group_by=[*dims, col], warehouse=wh)
+    got = {_key(r, [*dims, col]): r[metric] for r in governed.rows}
 
-    g = f"{sql_dim}, " if sql_dim else ""
-    part = f"PARTITION BY {sql_dim} " if sql_dim else ""
     con = duckdb.connect(str(wh.duckdb_path), read_only=True)
+    g = f"{sql_dim}, " if sql_dim else ""
+    join = f"AND f.{sql_dim} = p.{sql_dim}" if sql_dim else ""
     rows = con.execute(f"""
-        WITH months AS (
-            SELECT DISTINCT date_trunc('month', date_day) AS m FROM metricflow_time_spine),
-        groups AS (SELECT DISTINCT {sql_dim or "1"} AS g FROM fct_complaints),
-        counts AS (
-            SELECT {g}date_trunc('month', date_received) AS m, count(*) AS n
-            FROM fct_complaints GROUP BY ALL),
-        filled AS (
-            SELECT {"groups.g AS " + sql_dim + ", " if sql_dim else ""}months.m,
-                   coalesce(counts.n, 0) AS n
-            FROM months CROSS JOIN groups
-            LEFT JOIN counts ON counts.m = months.m
-                {"AND counts." + sql_dim + " = groups.g" if sql_dim else ""})
-        SELECT {g}strftime(m, '%Y-%m'),
-               (n - lag(n, {GROWTH[metric]}) OVER ({part}ORDER BY m))
-                 / nullif(lag(n, {GROWTH[metric]}) OVER ({part}ORDER BY m), 0)
-        FROM filled""").fetchall()
-    expected = {tuple(r[:-1]): r[-1] for r in rows}
-    assert got, metric
-    bad = {k: (v, expected.get(k)) for k, v in got.items() if not _same(v, expected.get(k))}
+        WITH bounds AS (SELECT min(date_received) AS lo, max(date_received) AS hi
+                        FROM fct_complaints),
+        periods AS (
+            SELECT DISTINCT {g}date_trunc('{grain}', date_received) AS p FROM fct_complaints),
+        spans AS (
+            SELECT periods.*, least(p + INTERVAL 1 {grain} - INTERVAL 1 DAY, hi) AS last_day
+            FROM periods, bounds)
+        SELECT {"p." + sql_dim + ", " if sql_dim else ""}strftime(p.p, '%Y-%m'),
+               count(*) FILTER (WHERE f.date_received BETWEEN p.p AND p.last_day) AS cur,
+               count(*) FILTER (WHERE f.date_received BETWEEN p.p - INTERVAL {months} MONTH
+                                AND p.last_day - INTERVAL {months} MONTH) AS earlier
+        FROM spans p LEFT JOIN fct_complaints f ON TRUE {join}
+        GROUP BY ALL""").fetchall()
+    expected = {tuple(r[:-2]): (r[-2] - r[-1]) / r[-1] if r[-1] else None for r in rows}
+    got_with_data = {k: v for k, v in got.items() if k in expected}
+    assert set(got_with_data) == set(expected), f"{metric}: missing periods"
+    bad = {k: (got[k], v) for k, v in expected.items() if not _same(got[k], v)}
     assert not bad, f"{metric}: {list(bad.items())[:5]}"
+
+
+def test_partial_periods_are_flagged(warehouse):
+    """The sample runs 2025-01-02..2026-06-30: both years are partial; 2026 is compared with
+    the same days of 2025 and flagged."""
+    result = query_metric(["complaint_growth_yoy_annual"], group_by=["metric_time__year"],
+                          warehouse=warehouse)  # fmt: skip
+    assert result.provenance.partial_periods == ["2025-01-01", "2026-01-01"]
+    monthly = query_metric(["complaint_count"], group_by=["metric_time__month"],
+                           warehouse=warehouse).provenance  # fmt: skip
+    assert monthly.partial_periods == ["2025-01-01"]  # the first month starts on the 2nd
+    yoy = query_metric(["complaint_growth_yoy"], group_by=["metric_time__month"],
+                       warehouse=warehouse).provenance  # fmt: skip
+    # every 2025 month compares with 2024 (before the data); 2026-01 compares with 2025-01,
+    # which misses its first day (the sample starts 2025-01-02)
+    assert yoy.partial_periods == [f"2025-{m:02d}-01" for m in range(1, 13)] + ["2026-01-01"]

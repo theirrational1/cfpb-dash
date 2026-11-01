@@ -39,6 +39,9 @@ class Provenance:
     filters: dict[str, str]
     time_range: tuple[str | None, str | None]
     data_range: tuple[str, str]  # first and last date_received in the warehouse
+    # periods (start dates) the data covers only partly, or whose comparison period starts
+    # before the data: growth there compares like for like but on fewer days (review 4 #3)
+    partial_periods: list[str]
     columns: list[str]
     snapshot_date: str
     source_sha256: str
@@ -83,6 +86,31 @@ def _period_end(d: date, grain: str) -> date:
     except (OverflowError, ValueError) as e:  # e.g. 9999-12-31: the period ends past year 9999
         raise ToolArgumentError(f"date {d} is out of range for the {grain} grain: {e}") from e
     return d
+
+
+def _months_back(d: date, months: int) -> date:
+    y, m = divmod(d.year * 12 + d.month - 1 - months, 12)
+    return d.replace(year=y, month=m + 1, day=1)
+
+
+def _partial_periods(
+    rows: list[dict], group_by: list[str], grain: str, catalog: Catalog, metrics: list[str],
+    data_range: tuple[str, str],
+) -> list[str]:  # fmt: skip
+    col = next((g for g in group_by if g in catalog.time_grains), None)
+    if col is None or grain == "day":
+        return []
+    first, last = (date.fromisoformat(d) for d in data_range)
+    back = max((r.offset_months or 0 for m in metrics if (r := catalog.period_rules.get(m))),
+               default=0)  # fmt: skip
+    partial = set()
+    for row in rows:
+        start = date.fromisoformat(str(row[col])[:10])
+        if start < first or _period_end(start, grain) > last:
+            partial.add(start)
+        elif back and _months_back(start, back) < first:
+            partial.add(start)
+    return sorted(p.isoformat() for p in partial)
 
 
 def _is_str_list(value: object) -> bool:
@@ -131,10 +159,10 @@ def _validate(
     if len(grains) > 1:
         raise ToolArgumentError(f"group by at most one time grain, got {grains}")
     for m in metrics:
-        allowed = catalog.offset_grains.get(m)
-        if allowed is not None and not (grains and grains[0] in allowed):
+        rule = catalog.period_rules.get(m)
+        if rule is not None and not (grains and grains[0] in rule.grains):
             raise ToolArgumentError(
-                f"{m} compares periods: group by one of {sorted(allowed)} (metric_time)"
+                f"{m} is defined over time: group by one of {sorted(rule.grains)} (metric_time)"
             )
     for dim, value in filters.items():
         if dim.startswith("metric_time"):
@@ -265,7 +293,8 @@ def query_metric(
     group_by = list(group_by or [])
     filters = dict(filters or {})
     start, end = time_range or (None, None)
-    grain = _validate(load_catalog(warehouse), list(metrics), group_by, filters, start, end)
+    catalog = load_catalog(warehouse)
+    grain = _validate(catalog, list(metrics), group_by, filters, start, end)
     snapshot = read_snapshot_stamp(warehouse)
     _check_coverage(start, end, grain, snapshot)
     _check_filter_values(filters, BASE_METRIC, warehouse, snapshot["built_at"])
@@ -302,6 +331,14 @@ def query_metric(
         filters=filters,
         time_range=(start, end),
         data_range=(snapshot["data_start"], snapshot["data_end"]),
+        partial_periods=_partial_periods(
+            rows,
+            group_by,
+            grain,
+            catalog,
+            list(metrics),
+            (snapshot["data_start"], snapshot["data_end"]),
+        ),  # fmt: skip
         columns=columns,
         snapshot_date=snapshot["snapshot_date"],
         source_sha256=snapshot["source_sha256"],

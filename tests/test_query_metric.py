@@ -182,16 +182,19 @@ def test_partly_covered_edge_period_is_allowed_and_coverage_is_in_provenance(war
 
 
 @pytest.mark.parametrize(
-    ("metric", "group_by", "message"),
+    ("metric", "group_by"),
     [
-        ("complaint_growth_mom", [], "metric_time"),
-        ("complaint_growth_mom", ["complaint__company"], "metric_time"),
-        ("complaint_growth_mom", ["metric_time__quarter"], "month"),
-        ("complaint_growth_mom", ["metric_time__week"], "month"),
-        ("complaint_growth_yoy", ["metric_time__week"], "year"),
+        ("complaint_growth_mom", []),
+        ("complaint_growth_mom", ["complaint__company"]),
+        ("complaint_growth_mom", ["metric_time__day"]),  # review 4 #3: day vs month offset
+        ("complaint_growth_mom", ["metric_time__quarter"]),
+        ("complaint_growth_yoy", ["metric_time__quarter"]),
+        ("complaint_growth_yoy_quarterly", ["metric_time__month"]),
+        ("complaint_growth_yoy_annual", ["metric_time__month"]),
+        ("complaint_count_ytd", []),
+        ("complaint_count_mtd", ["metric_time__year"]),
     ],
 )
-def test_period_over_period_metrics_need_a_compatible_time_grain(warehouse, metric, group_by,
-                                                                 message):  # fmt: skip
-    with pytest.raises(ToolArgumentError, match=message):
+def test_period_metrics_need_their_time_grain(warehouse, metric, group_by):
+    with pytest.raises(ToolArgumentError, match="defined over time"):
         query_metric([metric], group_by=group_by, warehouse=warehouse)

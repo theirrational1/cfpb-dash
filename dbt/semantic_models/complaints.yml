@@ -180,26 +180,75 @@ metrics:
     type: simple
     type_params: {measure: forwarding_lag_median}
 
+  # Period-to-date counts: complaints from the start of the month / quarter / year through
+  # each day; at a coarser grain, the value on the period's last day with data.
+  - name: complaint_count_mtd
+    label: Complaints month to date
+    description: Complaints from the 1st of the month through the day (last day with data).
+    type: cumulative
+    type_params:
+      measure: complaints
+      cumulative_type_params: {grain_to_date: month, period_agg: last}
+  - name: complaint_count_qtd
+    label: Complaints quarter to date
+    description: Complaints from the start of the quarter through the day (last day with data).
+    type: cumulative
+    type_params:
+      measure: complaints
+      cumulative_type_params: {grain_to_date: quarter, period_agg: last}
+  - name: complaint_count_ytd
+    label: Complaints year to date
+    description: Complaints from 1 January through the day (last day with data).
+    type: cumulative
+    type_params:
+      measure: complaints
+      cumulative_type_params: {grain_to_date: year, period_agg: last}
+
+  # Growth compares like for like: the same days of the earlier period (period to date), so a
+  # partial last period (data ending mid-month, or a year so far) is compared with the same
+  # span a month / year earlier. query_metric flags such periods in provenance.partial_periods.
   - name: complaint_growth_mom
     label: Complaint growth, month over month
     description: >-
-      (complaints this month - complaints the month before) / complaints the month before.
-      Null when the month before had none. Query grouped by metric_time__month.
+      Complaints this month (to the last day with data) vs the same days of the month before,
+      as (current - earlier) / earlier; null when the earlier span had none. Group by
+      metric_time__month. Partial months are compared like for like and flagged.
     type: derived
     type_params:
-      expr: (current_month - previous_month) / nullif(previous_month, 0)
+      expr: (month_to_date - previous_month_to_date) / nullif(previous_month_to_date, 0)
       metrics:
-        - {name: complaint_count, alias: current_month}
-        - {name: complaint_count, alias: previous_month, offset_window: 1 month}
+        - {name: complaint_count_mtd, alias: month_to_date}
+        - {name: complaint_count_mtd, alias: previous_month_to_date, offset_window: 1 month}
   - name: complaint_growth_yoy
-    label: Complaint growth, year over year
+    label: Complaint growth, year over year (monthly)
     description: >-
-      (complaints this period - the same period a year earlier) / the same period a year
-      earlier; removes seasonality. Null when that period had none. Group by month, quarter
-      or year.
+      Complaints this month vs the same days of the same month a year earlier; removes
+      seasonality. Group by metric_time__month. Partial months compared like for like, flagged.
     type: derived
     type_params:
-      expr: (current_period - year_earlier) / nullif(year_earlier, 0)
+      expr: (month_to_date - year_earlier) / nullif(year_earlier, 0)
       metrics:
-        - {name: complaint_count, alias: current_period}
-        - {name: complaint_count, alias: year_earlier, offset_window: 1 year}
+        - {name: complaint_count_mtd, alias: month_to_date}
+        - {name: complaint_count_mtd, alias: year_earlier, offset_window: 1 year}
+  - name: complaint_growth_yoy_quarterly
+    label: Complaint growth, year over year (quarterly)
+    description: >-
+      Complaints this quarter vs the same days of the quarter a year earlier. Group by
+      metric_time__quarter. Partial quarters compared like for like, flagged.
+    type: derived
+    type_params:
+      expr: (quarter_to_date - year_earlier) / nullif(year_earlier, 0)
+      metrics:
+        - {name: complaint_count_qtd, alias: quarter_to_date}
+        - {name: complaint_count_qtd, alias: year_earlier, offset_window: 1 year}
+  - name: complaint_growth_yoy_annual
+    label: Complaint growth, year over year (annual)
+    description: >-
+      Complaints this year vs the same days of the year before (e.g. 2026 so far vs the same
+      days of 2025). Group by metric_time__year. Partial years compared like for like, flagged.
+    type: derived
+    type_params:
+      expr: (year_to_date - year_earlier) / nullif(year_earlier, 0)
+      metrics:
+        - {name: complaint_count_ytd, alias: year_to_date}
+        - {name: complaint_count_ytd, alias: year_earlier, offset_window: 1 year}
