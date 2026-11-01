@@ -61,3 +61,14 @@ seeds:
         data_tests: [unique, not_null]
       - name: canonical_name
         data_tests: [not_null]
+  - name: company_responses
+    description: >
+      company_response -> closed / relief / monetary relief flags (approved in the M2 plan).
+      Null = not recorded or not applicable: excluded from the matching rate, never guessed.
+    config:
+      column_types: {is_closed: boolean, is_relief: boolean, is_monetary_relief: boolean}
+    columns:
+      - name: company_response
+        data_tests: [unique, not_null]
+      - name: is_closed
+        data_tests: [not_null]

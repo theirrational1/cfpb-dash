@@ -1,0 +1,9 @@
+company_response,is_closed,is_relief,is_monetary_relief,note
+Closed with explanation,true,false,false,
+Closed with non-monetary relief,true,true,false,
+Closed with monetary relief,true,true,true,
+Closed with relief,true,true,,"2011-12 regime: relief, kind not recorded"
+Closed without relief,true,false,false,2011-12 regime
+Closed,true,,,"2011-17: outcome not recorded; excluded from relief metrics, counted"
+In progress,false,,,open
+Untimely response,false,,,not closed

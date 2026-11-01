@@ -24,6 +24,19 @@ models:
               arguments:
                 to: ref('dim_company')
                 field: company_key
+      - name: company_response
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('company_responses')
+                field: company_response
+      - name: forwarding_lag_days
+        description: date_sent_to_company - date_received; -1 kept as-is (nulls.md).
+        data_tests: [not_null]
+      - name: received_month
+        data_tests: [not_null]
+      - name: is_closed
+        data_tests: [not_null]
   - name: dim_company
     description: >
       One row per canonical company: normalized name (case, spacing) plus reviewed aliases.
@@ -53,3 +66,45 @@ unit_tests:
       rows:
         - {company_key: "ACME BANK, N.A.", company_name: "ACME BANK, N.A.", n_raw_names: 4, n_complaints: 5}
         - {company_key: "OTHER CO LLC", company_name: "Other Co LLC", n_raw_names: 1, n_complaints: 1}
+  - name: int_complaints_engineered_columns
+    model: int_complaints
+    description: Hand-computed rows for each derived column (CLEANER Engineer).
+    given:
+      - input: ref('stg_complaints')
+        rows:
+          - {complaint_id: 1, company: "A", date_received: 2024-03-15, date_sent_to_company: 2024-03-14, company_response: "Closed with monetary relief", company_public_response: "Company chooses not to provide a public response"}
+          - {complaint_id: 2, company: "A", date_received: 2024-02-29, date_sent_to_company: 2024-03-05, company_response: "Closed with explanation", company_public_response: "Company has responded to the consumer and the CFPB and chooses not to provide a public response"}
+          - {complaint_id: 3, company: "A", date_received: 2012-01-31, date_sent_to_company: 2012-01-31, company_response: "Closed", company_public_response: null}
+          - {complaint_id: 4, company: "A", date_received: 2026-10-01, date_sent_to_company: 2026-10-01, company_response: "In progress", company_public_response: null}
+          - {complaint_id: 5, company: "A", date_received: 2012-06-01, date_sent_to_company: 2012-06-03, company_response: "Closed with relief", company_public_response: "none_given"}
+          - {complaint_id: 6, company: "A", date_received: 2020-01-01, date_sent_to_company: 2020-01-01, company_response: null, company_public_response: "none_given"}
+      - input: ref('product_family_map')
+        rows: []
+      - input: ref('credit_card_issue_map')
+        rows: []
+      - input: ref('company_aliases')
+        rows: []
+      - input: ref('company_responses')
+        format: csv
+        rows: |
+          company_response,is_closed,is_relief,is_monetary_relief,note
+          Closed with explanation,true,false,false,
+          Closed with monetary relief,true,true,true,
+          Closed with relief,true,true,,
+          Closed,true,,,
+          In progress,false,,,
+      - input: ref('public_responses')
+        format: csv
+        rows: |
+          public_response,canonical_public_response
+          none_given,none_given
+          Company chooses not to provide a public response,Company chooses not to provide a public response
+          Company has responded to the consumer and the CFPB and chooses not to provide a public response,Company chooses not to provide a public response
+    expect:
+      rows:
+        - {complaint_id: 1, forwarding_lag_days: -1, received_month: 2024-03-01, is_closed: true, is_relief: true, is_monetary_relief: true, public_response: "Company chooses not to provide a public response"}
+        - {complaint_id: 2, forwarding_lag_days: 5, received_month: 2024-02-01, is_closed: true, is_relief: false, is_monetary_relief: false, public_response: "Company chooses not to provide a public response"}
+        - {complaint_id: 3, forwarding_lag_days: 0, received_month: 2012-01-01, is_closed: true, is_relief: null, is_monetary_relief: null, public_response: null}
+        - {complaint_id: 4, forwarding_lag_days: 0, received_month: 2026-10-01, is_closed: false, is_relief: null, is_monetary_relief: null, public_response: null}
+        - {complaint_id: 5, forwarding_lag_days: 2, received_month: 2012-06-01, is_closed: true, is_relief: true, is_monetary_relief: null, public_response: none_given}
+        - {complaint_id: 6, forwarding_lag_days: 0, received_month: 2020-01-01, is_closed: false, is_relief: null, is_monetary_relief: null, public_response: none_given}

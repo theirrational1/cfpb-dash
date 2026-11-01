@@ -58,7 +58,7 @@ CLEANER null categories: **meaningful blank** (encode explicitly), **unknown** (
 
 `complaint_id` (also `unique`, integer), `date_received`, `date_sent_to_company` (both parse as dates), `product`, `company`, `submitted_via`, `timely`. These have zero nulls today, so a null is a source change and fails the build (`not_null` on each; `unique` on `complaint_id`; `timely` is typed boolean after a source `accepted_values` test on `Yes`/`No`).
 
-- **Related, not a null:** 7,050 complaints have `date_sent_to_company` exactly one day **before** `date_received`. **✔ decided:** `forwarding_lag_days` **keeps −1** as-is. We'll check its effect on the metrics (M3) before deciding anything further; a test pins the count of negative lags so a change is noticed *(with `forwarding_lag_days` in M2-08)*.
+- **Related, not a null:** 7,050 complaints have `date_sent_to_company` exactly one day **before** `date_received`. **✔ decided:** `forwarding_lag_days` **keeps −1** as-is. We'll check its effect on the metrics (M3) before deciding anything further; a test pins the count of negative lags so a change is noticed (`assert_forwarding_lag_pinned`: ≤ `var(negative_lag_cap)` = 7,100 and nothing below −1).
 
 ## Narrative archive
 

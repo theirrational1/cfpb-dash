@@ -18,6 +18,7 @@ vars:
   issue_null_cap: 10
   company_response_null_cap: 25
   sub_product_stray_null_cap: 150  # 136 today: 99 checking/savings, 34 payday, 3 card
+  negative_lag_cap: 7100  # 7,050 today, all exactly -1 day (nulls.md: kept as-is)
 
 flags:
   send_anonymous_usage_stats: false

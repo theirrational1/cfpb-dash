@@ -64,7 +64,7 @@ Small, specific tasks to implement `PRD.md`. TDD for every feature. One mileston
 - [x] M2-11 **(you + agent)** Revise `cleaner` skill v0 → v1 from what M0 profiling and M2-04/05 taught; only then copy it to user-level skills
 - [x] M2-06 Category mapping across years (seed table) + tests
 - [x] M2-07 Company dimension + name resolution; match-rate test
-- [ ] M2-08 Intermediate: forwarding lag, relief flag, month keys
+- [x] M2-08 Intermediate: forwarding lag, relief flag, month keys
 - [ ] M2-09 Complaint fact; tests: unique id, not-null, accepted values, row count vs raw
 
 **Then**
